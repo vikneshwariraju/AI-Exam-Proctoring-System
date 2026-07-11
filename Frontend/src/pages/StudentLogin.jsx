@@ -57,6 +57,9 @@ const StudentLogin = () => {
         <p className="auth-switch">
           New student? <Link to="/student/register">Create an account</Link>
         </p>
+        <p className="auth-switch">
+        Are you faculty? <Link to="/faculty/login">Faculty login</Link>
+        </p>
       </form>
     </div>
   );

@@ -4,7 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import StudentLogin from "./pages/StudentLogin";
 import StudentRegister from "./pages/StudentRegister";
 import FacultyLogin from "./pages/FacultyLogin";
-
+import AdminDashboard from "./pages/AdminDashboard";
 const StudentDashboard = () => <h2>Student Dashboard (coming soon)</h2>;
 const FacultyDashboard = () => <h2>Faculty Dashboard (coming soon)</h2>;
 const Unauthorized = () => <h2>You are not authorized to view this page.</h2>;
@@ -24,6 +24,9 @@ function App() {
           } />
           <Route path="/faculty/dashboard" element={
             <ProtectedRoute allowedRoles={["faculty"]}><FacultyDashboard /></ProtectedRoute>
+          } />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>
           } />
         </Routes>
       </BrowserRouter>
