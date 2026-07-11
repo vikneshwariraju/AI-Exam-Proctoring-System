@@ -16,8 +16,8 @@ const FacultyLogin = () => {
     setServerError("");
     setSubmitting(true);
     try {
-      const data = await loginUser({ ...formData, role: "faculty" });
-      login(data.user);
+      const data = await loginUser(formData, "faculty");
+      login({ user_id: data.user_id, name: data.name, role: data.role });
       navigate("/faculty/dashboard");
     } catch (err) {
       setServerError(err.response?.data?.detail || "Invalid email or password.");
