@@ -7,4 +7,5 @@ urlpatterns = [
     path('api/exams/', include('exams.urls')),
     path('api/questions/', include('questions.urls')),
     path('api/submissions/', include('submissions.urls')),
+    path('api/results/', include('results.urls')),
 ]
