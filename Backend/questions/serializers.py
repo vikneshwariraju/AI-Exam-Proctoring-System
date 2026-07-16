@@ -1,0 +1,9 @@
+from rest_framework import serializers
+from .models import Question
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ['id', 'exam', 'question_text', 'option1', 'option2', 'option3', 'option4', 'answer', 'difficulty', 'created_at']
+        read_only_fields = ['created_at']
