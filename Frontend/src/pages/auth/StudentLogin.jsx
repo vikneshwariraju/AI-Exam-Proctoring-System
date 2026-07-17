@@ -231,12 +231,9 @@ export default function StudentLogin() {
 
                         {serverError &&
                             <div className="error-banner">
-
                                 {serverError}
-
                             </div>
                         }
-
                         <form
                             className="auth-form"
                             onSubmit={handleSubmit(onSubmit)}
@@ -247,7 +244,6 @@ export default function StudentLogin() {
                             <div>
 
                                 <div className="input-group">
-
                                     <HiOutlineMail className="input-icon" />
 
                                     <input
@@ -257,31 +253,18 @@ export default function StudentLogin() {
                                             required: "Email is required"
                                         })}
                                     />
-
                                     <label>Email Address</label>
-
                                 </div>
-
                                 {errors.email &&
                                     <p className="field-error">
-
                                         {errors.email.message}
-
                                     </p>
                                 }
-
                             </div>
-
                             {/* PASSWORD */}
-
                             <div>
-
                                 <div className="input-group">
-
-                                    <HiOutlineLockClosed
-                                        className="input-icon"
-                                    />
-
+                                    <HiOutlineLockClosed className="input-icon" />
                                     <input
                                         type={
                                             showPassword
@@ -293,9 +276,7 @@ export default function StudentLogin() {
                                             required: "Password is required"
                                         })}
                                     />
-
                                     <label>Password</label>
-
                                     <span
                                         className="password-toggle"
                                         onClick={() =>
