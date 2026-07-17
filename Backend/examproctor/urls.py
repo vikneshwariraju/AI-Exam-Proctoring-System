@@ -9,4 +9,5 @@ urlpatterns = [
     path('api/submissions/', include('submissions.urls')),
     path('api/results/', include('results.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/ai-proctoring/', include('ai_proctoring.urls')),
 ]
