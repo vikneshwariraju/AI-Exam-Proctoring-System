@@ -69,3 +69,19 @@ class CreateFacultyView(APIView):
                 'role': user.role
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+ 
+
+class UserStatsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        total_students = User.objects.filter(role='student').count()
+        total_faculty = User.objects.filter(role='faculty').count()
+        total_admins = User.objects.filter(role='admin').count()
+
+        return Response({
+            'total_students': total_students,
+            'total_faculty': total_faculty,
+            'total_admins': total_admins,
+            'total_users': total_students + total_faculty + total_admins
+        }, status=status.HTTP_200_OK)
