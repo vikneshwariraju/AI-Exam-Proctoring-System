@@ -1,9 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
 from users.permissions import IsFaculty
+from questions.models import Question
 from .models import Exam
 from .serializers import ExamSerializer
+from results.models import Result
 
 
 class CreateExamView(APIView):
@@ -55,3 +59,63 @@ class DeleteExamView(APIView):
 
         exam.delete()
         return Response({'message': 'Exam deleted successfully'}, status=status.HTTP_200_OK)    
+class UpcomingExamsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        exams = Exam.objects.filter(end_time__gte=now)
+        data = []
+        for e in exams:
+            done = Result.objects.filter(student=request.user, exam=e).exists()
+            if done:
+                exam_status = 'completed'
+            elif e.start_time <= now <= e.end_time:
+                exam_status = 'available'
+            else:
+                exam_status = 'upcoming'
+            data.append({
+                'id': e.id,
+                'title': e.title,
+                'subject': e.title,
+                'duration': e.duration,
+                'total_marks': e.total_marks,
+                'start_time': e.start_time,
+                'status': exam_status
+            })
+        return Response(data)
+class FacultyDashboardView(APIView):
+    permission_classes = [IsFaculty]
+
+    def get(self, request):
+        now = timezone.now()
+        my_exams = Exam.objects.filter(faculty=request.user)
+        total_exams = my_exams.count()
+        total_questions = Question.objects.filter(exam__faculty=request.user).count()
+        upcoming_exams = my_exams.filter(start_time__gt=now).count()
+
+        return Response({
+            'total_exams': total_exams,
+            'total_questions': total_questions,
+            'upcoming_exams': upcoming_exams
+        })
+
+
+class FacultyExamsView(APIView):
+    permission_classes = [IsFaculty]
+
+    def get(self, request):
+        exams = Exam.objects.filter(faculty=request.user)
+        data = []
+        for e in exams:
+            q_count = Question.objects.filter(exam=e).count()
+            data.append({
+                'id': e.id,
+                'title': e.title,
+                'subject': e.title,
+                'duration': e.duration,
+                'total_marks': e.total_marks,
+                'question_count': q_count,
+                'status': 'published'
+            })
+        return Response(data)
