@@ -7,6 +7,10 @@ from questions.models import Question
 from submissions.models import StudentAnswer
 from .models import Result
 from .serializers import ResultSerializer
+from django.utils import timezone
+from django.utils.timesince import timesince
+from .models import Result, Notification
+from exams.models import Exam
 
 
 class CalculateResultView(APIView):
@@ -41,6 +45,11 @@ class CalculateResultView(APIView):
             marks=round(marks),
             percentage=round(percentage, 2)
         )
+        Notification.objects.create(
+        student=request.user,
+        message=f"Your result for {exam.title} is out",
+        type='success'
+        )
 
         serializer = ResultSerializer(result)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -57,3 +66,46 @@ class ViewResultView(APIView):
 
         serializer = ResultSerializer(result)
         return Response(serializer.data, status=status.HTTP_200_OK)
+class StudentDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        total_exams = Exam.objects.count()
+        results = Result.objects.filter(student=request.user)
+        completed_exams = results.count()
+        average_score = round(sum(r.percentage for r in results) / completed_exams) if completed_exams > 0 else 0
+
+        return Response({
+            'total_exams': total_exams,
+            'completed_exams': completed_exams,
+            'average_score': average_score
+        })
+
+
+class RecentResultsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        results = Result.objects.filter(student=request.user).order_by('-created_at')[:5]
+        data = [{
+            'id': r.id,
+            'title': r.exam.title,
+            'score': r.marks,
+            'total_marks': r.exam.total_marks,
+            'percentage': r.percentage
+        } for r in results]
+        return Response(data)
+
+
+class StudentNotificationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notifications = Notification.objects.filter(student=request.user).order_by('-created_at')[:10]
+        data = [{
+            'id': n.id,
+            'message': n.message,
+            'time': f"{timesince(n.created_at)} ago",
+            'type': n.type
+        } for n in notifications]
+        return Response(data)
