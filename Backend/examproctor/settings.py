@@ -4,10 +4,10 @@ Django settings for examproctor project.
 
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = 'django-insecure-mx*)p7nan+*ys8g+k1nh82cq=k!q#c5kt#ip!#n^+j!hy%7!m1'
+SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = True
 
@@ -68,12 +68,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'examproctor.wsgi.application'
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'examproctor_db',
-        'USER': 'root',
-        'PASSWORD': 'RaVa',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'ENGINE': config('DB_ENGINE'),
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
     }
 }
 
