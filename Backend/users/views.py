@@ -34,10 +34,20 @@ class LoginView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(request, email=email, password=password)
+        if not email or not password:
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = authenticate(request, email=email, password=password)
+        except Exception as e:
+            return Response({'error': f'Server error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if user is None:
-            return Response({'error': 'Invalid email or password'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                existing_user = User.objects.get(email=email)
+                return Response({'error': 'Incorrect password'}, status=status.HTTP_400_BAD_REQUEST)
+            except User.DoesNotExist:
+                return Response({'error': 'No account found with this email'}, status=status.HTTP_404_NOT_FOUND)
 
         refresh = RefreshToken.for_user(user)
 
@@ -48,7 +58,6 @@ class LoginView(APIView):
             'name': user.name,
             'user_id': user.id
         }, status=status.HTTP_200_OK)
-
 
 class TestProtectedView(APIView):
     permission_classes = [IsAuthenticated]
