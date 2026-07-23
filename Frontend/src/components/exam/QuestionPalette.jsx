@@ -1,40 +1,106 @@
-const QuestionPalette = ({ questions, answers, currentIndex, onJump }) => {
+import "../../styles/exam.css";
+
+const QuestionPalette = ({
+  questions,
+  answers,
+ currentIndex,
+  onJump,
+  onSubmit,
+}) => {
+
+  const answered = Object.keys(answers).length;
+  const remaining = questions.length - answered;
+
   return (
-    <div className="card" style={{ padding: 20 }}>
-      <h4 style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 14, color: "var(--color-text-primary)" }}>
+    <div className="palette-card">
+
+      <h5 className="fw-bold mb-3">
         Question Palette
-      </h4>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
-        {questions.map((q, i) => {
-          if (!q) return null; // guard against missing question data
-          const isAnswered = answers[q.id] !== undefined;
-          const isCurrent = i === currentIndex;
+      </h5>
+
+      <div className="palette-grid">
+
+        {questions.map((q, index) => {
+
+          const answeredQuestion = answers[q.id] !== undefined;
+
+          let className = "palette-btn palette-normal";
+
+          if (answeredQuestion)
+            className = "palette-btn palette-answer";
+
+          if (index === currentIndex)
+            className = "palette-btn palette-current";
 
           return (
             <button
-              key={q.id ?? i}
-              onClick={() => onJump(i)}
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "var(--radius-sm)",
-                border: isCurrent ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
-                background: isAnswered ? "var(--color-primary-light)" : "#fff",
-                color: "var(--color-text-primary)",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              key={q.id}
+              className={className}
+              onClick={() => onJump(index)}
             >
-              {i + 1}
+              {index + 1}
             </button>
           );
+
         })}
+
       </div>
 
-      <div style={{ marginTop: 16, fontSize: 12, color: "var(--color-text-secondary)" }}>
-        Answered: {Object.keys(answers).length} / {questions.length}
+      <hr />
+
+      <div className="mt-3">
+
+        <div className="d-flex justify-content-between mb-2">
+          <span>Answered</span>
+          <strong>{answered}</strong>
+        </div>
+
+        <div className="d-flex justify-content-between mb-2">
+          <span>Remaining</span>
+          <strong>{remaining}</strong>
+        </div>
+
+        <div className="d-flex justify-content-between">
+          <span>Total Questions</span>
+          <strong>{questions.length}</strong>
+        </div>
+
       </div>
+
+      <div className="mt-4">
+
+        <h6 className="fw-bold mb-3">
+          Legend
+        </h6>
+
+        <div className="legend">
+
+          <div>
+            <span className="box green"></span>
+            Answered
+          </div>
+
+          <div>
+            <span className="box blue"></span>
+            Current
+          </div>
+
+          <div>
+            <span className="box gray"></span>
+            Not Visited
+          </div>
+
+        </div>
+
+      </div>
+
+      <button
+        className="btn btn-danger submit-btn mt-4"
+        onClick={onSubmit}
+      >
+        Submit Exam
+      </button>
+
     </div>
   );
 };

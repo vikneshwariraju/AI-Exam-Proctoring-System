@@ -1,47 +1,58 @@
-import api from "./api";
-import { initialStudents, initialFaculty, mockStats } from "./mockData";
+import api from "./authService";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+/**create faculty */
+export const createFaculty = async (formData) => {
+    const { data } = await api.post("/users/create-faculty/", formData);
+    return { ...data, status: "active" };
 
-// In-memory store so mock "Add Faculty" persists during the session
-let facultyStore = [...initialFaculty];
-let nextId = 200;
+};
 
+/**dashboard */
 export const getDashboardStats = async () => {
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 300));
-    return mockStats;
-  }
-  const { data } = await api.get("/admin/stats/");
-  return data;
+  const { data } = await api.get("/admin/dashboard/");
+
+  return {
+    totalStudents: data.total_students,
+    totalFaculty: data.total_faculty,
+    activeExams: data.active_exams,
+    flaggedAlerts: data.flagged_alerts,
+  };
 };
 
+/**student */
 export const getAllStudents = async () => {
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 300));
-    return initialStudents;
-  }
   const { data } = await api.get("/admin/students/");
-  return data;
+
+  return data.map((student) => ({
+    id: student.id,
+    name: student.name,
+    email: student.email,
+    created_at: student.created_at,
+  }));
 };
 
+/**faculty */
 export const getAllFaculty = async () => {
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 300));
-    return facultyStore;
-  }
   const { data } = await api.get("/admin/faculty/");
-  return data;
+
+  return data.map((faculty) => ({
+    id: faculty.id,
+    name: faculty.name,
+    email: faculty.email,
+    created_at: faculty.created_at,
+  }));
 };
 
-export const createFaculty = async (facultyData) => {
-  // facultyData: { name, email, password }
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 400));
-    const newFaculty = { id: nextId++, name: facultyData.name, email: facultyData.email, status: "active" };
-    facultyStore = [...facultyStore, newFaculty];
-    return newFaculty;
-  }
-  const { data } = await api.post("/admin/faculty/create/", { ...facultyData, role: "faculty" });
-  return data;
+/**exams */
+export const getAllExams = async () => {
+  const { data } = await api.get("/admin/exams/");
+
+  return data.map((exam) => ({
+    id: exam.id,
+    title: exam.title,
+    facultyName: exam.faculty_name,
+    totalMarks: exam.total_marks,
+    startTime: exam.start_time,
+    endTime: exam.end_time,
+  }));
 };
