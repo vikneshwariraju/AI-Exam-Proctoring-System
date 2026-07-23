@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.db.models import Count
 from exams.models import Exam
 from ai_proctoring.models import AILog
+from django.core.mail import send_mail
+from .models import PasswordResetOTP
 
 class RegisterView(APIView):
     def post(self, request):
@@ -152,3 +154,71 @@ class AdminExamsView(APIView):
             'end_time': e.end_time,
         } for e in exams]
         return Response(data)
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'No account found with this email'}, status=status.HTTP_404_NOT_FOUND)
+
+        otp = PasswordResetOTP.generate_otp()
+        PasswordResetOTP.objects.create(user=user, otp=otp)
+
+        send_mail(
+            subject='Password Reset OTP - AI Exam Proctoring System',
+            message=f'Your OTP for password reset is: {otp}\nThis OTP is valid for 10 minutes.',
+            from_email=None,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({'message': 'OTP sent to your email'}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+
+        if new_password != confirm_password:
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'No account found with this email'}, status=status.HTTP_404_NOT_FOUND)
+
+        otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp).order_by('-created_at').first()
+
+        if not otp_record or not otp_record.is_valid():
+            return Response({'error': 'Invalid or expired OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        otp_record.is_used = True
+        otp_record.save()
+
+        return Response({'message': 'Password reset successful'}, status=status.HTTP_200_OK)
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+
+        if not request.user.check_password(old_password):
+            return Response({'error': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({'error': 'New passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(new_password)
+        request.user.save()
+
+        return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
