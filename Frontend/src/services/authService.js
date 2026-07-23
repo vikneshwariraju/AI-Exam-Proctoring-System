@@ -1,58 +1,75 @@
-import api from "./api";
-import { mockLoginResponse, mockRegisterResponse } from "./mockData";
+import axios from "axios";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// Set VITE_API_BASE_URL in a .env file at your project root if Django
+// runs somewhere other than the local default below.
+// e.g.  VITE_API_BASE_URL=http://127.0.0.1:8000/api
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
+const api = axios.create({
+    baseURL: BASE_URL,
+    headers: {
+        "Content-Type": "application/json"
+    }
+});
+
+// Attach the JWT access token to every outgoing request, EXCEPT public
+// endpoints like login/register — sending a stale/expired token there
+// causes DRF's JWTAuthentication to reject the request with "token expired"
+// before the view even checks the submitted credentials.
+const PUBLIC_ENDPOINTS = ["/users/login/", "/users/register/"];
+
+api.interceptors.request.use((config) => {
+
+    const isPublic = PUBLIC_ENDPOINTS.some((path) => config.url?.includes(path));
+
+    const token = localStorage.getItem("access_token");
+
+    if (token && !isPublic) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+
+});
+
+/**
+ * POST /users/register/
+ * Backend always sets role='student' server-side, so this only
+ * ever creates a student account. The serializer requires
+ * confirm_password too, so we send the form data as-is.
+ * No tokens are returned on register — log in afterwards.
+ */
 export const registerStudent = async (formData) => {
-  if (USE_MOCK) {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(mockRegisterResponse), 500)
-    );
-  }
-  const { data } = await api.post("/users/register/", { ...formData, role: "student" });
-  return data;
+
+    const response = await api.post("/users/register/", formData);
+
+    return response.data;
+
 };
 
-export const registerFaculty = async (formData) => {
-  if (USE_MOCK) {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ ...mockRegisterResponse, role: "faculty" }), 500)
-    );
-  }
-  const { data } = await api.post("/users/register/", { ...formData, role: "faculty" });
-  return data;
-};
+/**
+ * POST /login/
+ * Shared endpoint for student, faculty and admin. The backend decides
+ * the role from the user record and returns it — the caller should check
+ * data.role and act accordingly (this file doesn't enforce which role
+ * is "allowed" to log in here, the calling component does).
+ */
+export const loginUser = async ({ email, password }) => {
 
-export const loginUser = async ({ email, password }, roleOverride) => {
-  let data;
-
-  if (USE_MOCK) {
-    data = { ...mockLoginResponse, role: roleOverride || mockLoginResponse.role };
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  } else {
     const response = await api.post("/users/login/", { email, password });
-    data = response.data;
-  }
 
-  if (data.token) {
-    localStorage.setItem("access_token", data.token);
-    localStorage.setItem("refresh_token", data.refresh);
-    localStorage.setItem(
-      "user",
-      JSON.stringify({ user_id: data.user_id, name: data.name, role: data.role })
-    );
-  }
+    const { token, refresh, role, name, user_id } = response.data;
 
-  return data;
+    localStorage.setItem("access_token", token);
+    localStorage.setItem("refresh_token", refresh);
+
+    return { token, refresh, role, name, user_id };
+
 };
 
 export const logoutUser = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
 };
 
-export const getCurrentUser = () => {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
-};
+export default api;

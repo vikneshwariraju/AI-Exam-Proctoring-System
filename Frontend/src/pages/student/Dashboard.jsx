@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FileText, CheckCircle2, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getStudentStats, getStudentExams, getNotifications } from "../../services/studentService";
+import { getStudentStats, getStudentExams, getNotifications, getRecentResults } from "../../services/studentService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import WelcomeCard from "../../components/dashboard/WelcomeCard";
 import StatisticsCard from "../../components/dashboard/StatisticsCard";
@@ -19,22 +19,33 @@ const StudentDashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [exams, setExams] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      const [statsData, examsData, notifData] = await Promise.all([
-        getStudentStats(),
-        getStudentExams(),
-        getNotifications(),
-      ]);
+  const loadData = async () => {
+    try {
+      const [statsData, examsData, resultsData, notifData] =
+        await Promise.all([
+          getStudentStats(),
+          getStudentExams(),
+          getRecentResults(),
+          getNotifications(),
+        ]);
+
       setStats(statsData);
       setExams(examsData);
       setNotifications(notifData);
+      setResults(resultsData);
+    } catch (error) {
+      console.error(error);
+    } finally {
       setLoading(false);
-    };
-    loadData();
-  }, []);
+    }
+  };
+
+  loadData();
+}, []);
 
   if (loading) {
     return (
@@ -44,8 +55,8 @@ const StudentDashboardPage = () => {
     );
   }
 
-  const upcoming = exams.filter((e) => e.status !== "completed");
-  const completed = exams.filter((e) => e.status === "completed");
+  const upcoming = exams.filter((e) => e.status == "available" || e.status=="upcoming");
+  const completed = results;
 
   const statCards = [
     { label: "Total Exams", value: stats.totalExams, icon: <FileText size={17} color="#2563EB" />, bg: "#EFF6FF" },

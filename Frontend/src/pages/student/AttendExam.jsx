@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getExamDetails, getExamQuestions, submitExam } from "../../services/examService";
+import { logWarning } from "../../services/aiService";
 import Timer from "../../components/exam/Timer";
 import QuestionCard from "../../components/exam/QuestionCard";
 import QuestionPalette from "../../components/exam/QuestionPalette";
@@ -18,17 +19,87 @@ const AttendExam = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    Promise.all([getExamDetails(examId), getExamQuestions(examId)]).then(([e, q]) => {
-      setExam(e);
-      setQuestions(q);
-    });
+    setLoading(true);
+    setLoadError("");
+
+    Promise.all([getExamDetails(examId), getExamQuestions(examId)])
+      .then(([e, q]) => {
+        if (!e) {
+          setLoadError("This exam couldn't be found.");
+          return;
+        }
+        if (!q || q.length === 0) {
+          setLoadError("This exam has no questions yet — nothing to attend.");
+          return;
+        }
+        setExam(e);
+        setQuestions(q);
+      })
+      .catch((err) => {
+        console.error("Failed to start exam:", err.response?.data || err);
+        setLoadError(
+          err.response?.data?.error ||
+          err.response?.data?.detail ||
+          "Could not load this exam. Please try again."
+        );
+      })
+      .finally(() => setLoading(false));
   }, [examId]);
 
-  if (!exam || questions.length === 0) {
+  if (loading) {
     return <div style={{ padding: 60 }}><Loader label="Loading exam..." /></div>;
   }
+
+  if (loadError || !exam || questions.length === 0) {
+    return (
+      <div style={{ padding: 60, maxWidth: 500, margin: "0 auto" }}>
+        <div className="card" style={{ padding: 24, color: "#b91c1c" }}>
+          {loadError || "Something went wrong loading this exam."}
+        </div>
+        <button
+          className="btn-secondary-brand mt-3"
+          onClick={() => navigate(-1)}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+  useEffect(() => {
+  let warningSent = false;
+
+  const handleTabSwitch = async () => {
+    if (warningSent) return;
+
+    warningSent = true;
+
+    try {
+      const response = await logWarning(examId, "tab_switch");
+
+      console.log("Warning Logged:", response);
+
+      if (response.flagged) {
+        alert("Warning! Multiple suspicious activities detected.");
+      }
+    } catch (err) {
+      console.error("Failed to log warning", err);
+    }
+
+    setTimeout(() => {
+      warningSent = false;
+    }, 3000);
+  };
+
+  window.addEventListener("blur", handleTabSwitch);
+
+  return () => {
+    window.removeEventListener("blur", handleTabSwitch);
+  };
+}, [examId]);
 
   const currentQuestion = questions[currentIndex];
 
@@ -38,9 +109,18 @@ const AttendExam = () => {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const result = await submitExam(examId, answers);
-    setSubmitting(false);
-    navigate(`/student/results/${examId}`, { state: result });
+    try {
+      const result = await submitExam(examId, answers);
+      navigate(`/student/results/${examId}`, { state: result });
+    } catch (err) {
+      console.error("Failed to submit exam:", err.response?.data || err);
+      setLoadError(
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        "Could not submit your exam. Please try again."
+      );
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,11 +155,12 @@ const AttendExam = () => {
         </div>
 
         <QuestionPalette
-          questions={questions}
-          answers={answers}
-          currentIndex={currentIndex}
-          onJump={setCurrentIndex}
-        />
+  questions={questions}
+  answers={answers}
+  currentIndex={currentIndex}
+  onJump={setCurrentIndex}
+  onSubmit={() => setShowSubmitModal(true)}
+/>
       </div>
 
       {showSubmitModal && (
