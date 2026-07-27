@@ -16,7 +16,8 @@ const api = axios.create({
 // endpoints like login/register — sending a stale/expired token there
 // causes DRF's JWTAuthentication to reject the request with "token expired"
 // before the view even checks the submitted credentials.
-const PUBLIC_ENDPOINTS = ["/users/login/", "/users/register/"];
+const PUBLIC_ENDPOINTS = ["/users/login/", "/users/register/","/users/forgot-password/",
+  "/users/reset-password/",];
 
 api.interceptors.request.use((config) => {
 
@@ -58,10 +59,27 @@ export const loginUser = async ({ email, password }) => {
 
     const response = await api.post("/users/login/", { email, password });
 
-    const { token, refresh, role, name, user_id } = response.data;
+    const data = response.data;
+
+    // Different DRF JWT setups name these differently — SimpleJWT's
+    // default TokenObtainPairView returns access/refresh, but a custom
+    // login view might return token/refresh_token instead. Accept both
+    // so this doesn't silently store "undefined" if the backend uses
+    // one naming convention and this file assumes the other.
+    const token = data.token ?? data.access ?? data.access_token;
+    const refresh = data.refresh ?? data.refresh_token;
+    const { role, name, user_id } = data;
+
+    if (!token) {
+        // Fail loudly instead of storing "undefined" and letting every
+        // later request 401 silently — this is the bug to watch for if
+        // login "succeeds" but the dashboard never loads.
+        console.error("Login response did not include an access token. Response was:", data);
+        throw new Error("Login succeeded but no access token was returned by the server.");
+    }
 
     localStorage.setItem("access_token", token);
-    localStorage.setItem("refresh_token", refresh);
+    if (refresh) localStorage.setItem("refresh_token", refresh);
 
     return { token, refresh, role, name, user_id };
 
@@ -70,6 +88,47 @@ export const loginUser = async ({ email, password }) => {
 export const logoutUser = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+};
+
+// Forgot Password
+export const forgotPassword = async (email) => {
+  const response = await api.post("/users/forgot-password/", {
+    email,
+  });
+
+  return response.data;
+};
+
+// Reset Password
+export const resetPassword = async ({
+  email,
+  otp,
+  new_password,
+  confirm_password,
+}) => {
+  const response = await api.post("/users/reset-password/", {
+    email,
+    otp,
+    new_password,
+    confirm_password,
+  });
+
+  return response.data;
+};
+
+// Change Password
+export const changePassword = async ({
+  old_password,
+  new_password,
+  confirm_password,
+}) => {
+  const response = await api.post("/users/change-password/", {
+    old_password,
+    new_password,
+    confirm_password,
+  });
+
+  return response.data;
 };
 
 export default api;
