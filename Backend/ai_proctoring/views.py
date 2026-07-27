@@ -102,17 +102,21 @@ class DetectFaceView(APIView):
             image_bytes = base64.b64decode(image_data)
             np_arr = np.frombuffer(image_bytes, np.uint8)
             img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+            if img is None or img.shape[0] < 100 or img.shape[1] < 100:
+                return Response({'error': 'Image is too small or invalid for reliable detection'}, status=status.HTTP_400_BAD_REQUEST)
 
-            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-            face_cascade = cv2.CascadeClassifier(cascade_path)
+            frontal_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+            profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_profileface.xml")
 
-            if face_cascade.empty():
-                raise Exception(f"Failed to load Haar Cascade XML file from: {cascade_path}")
+            if frontal_cascade.empty() or profile_cascade.empty():
+                raise Exception("Failed to load one or more Haar Cascade files")
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
 
-            face_count = len(faces)
+            frontal_faces = frontal_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(25, 25))
+            profile_faces = profile_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(25, 25))
+
+            face_count = len(frontal_faces) + len(profile_faces)
 
             warning_type = None
             if face_count == 0:
