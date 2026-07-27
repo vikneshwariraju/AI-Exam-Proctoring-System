@@ -6,7 +6,11 @@ from users.permissions import IsFaculty
 from exams.models import Exam
 from .models import AILog
 from .serializers import AILogSerializer
-
+import cv2
+import numpy as np
+import base64
+import os
+from django.conf import settings
 
 class LogWarningView(APIView):
     """Called by the frontend whenever it detects suspicious activity."""
@@ -74,3 +78,66 @@ class StudentWarningsView(APIView):
             data['flagged'] = data['warning_count'] >= 3
 
         return Response(list(student_warnings.values()), status=status.HTTP_200_OK)
+
+
+class DetectFaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        exam_id = request.data.get('exam')
+        image_data = request.data.get('image')
+
+        if not image_data:
+            return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({'error': 'Exam not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+
+            image_bytes = base64.b64decode(image_data)
+            np_arr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            face_cascade = cv2.CascadeClassifier(cascade_path)
+
+            if face_cascade.empty():
+                raise Exception(f"Failed to load Haar Cascade XML file from: {cascade_path}")
+
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+
+            face_count = len(faces)
+
+            warning_type = None
+            if face_count == 0:
+                warning_type = 'face_missing'
+            elif face_count > 1:
+                warning_type = 'multiple_faces'
+
+            warning_count = None
+            flagged = False
+
+            if warning_type:
+                AILog.objects.create(
+                    student=request.user,
+                    exam=exam,
+                    warning_type=warning_type
+                )
+                warning_count = AILog.objects.filter(student=request.user, exam=exam).count()
+                flagged = warning_count >= 3
+
+            return Response({
+                'face_count': face_count,
+                'warning_type': warning_type,
+                'warning_count': warning_count,
+                'flagged': flagged
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': f'Image processing failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
