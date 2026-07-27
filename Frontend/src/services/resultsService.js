@@ -2,23 +2,23 @@ import api from "./authService";
 import { getFacultyExams } from "./facultyService";
 
 /**
- * GET /api/analytics/exam-analytics/<exam_id>/ — "Faculty's class-wide
- * analytics". This is the only endpoint that could plausibly return
- * every student's result for a given exam — there's no generic
- * "all results" endpoint on the backend.
+ * GET /api/results/faculty/exam-results/<exam_id>/ — FacultyViewExamResultsView.
+ * Returns one row PER STUDENT for this exam: { result_id, student_id,
+ * student_name, marks, percentage, published }.
  *
- * NOTE: response shape is completely unconfirmed. This normalizes
- * flexibly (tries .results, .students, or a raw array) but the actual
- * field names per row are a guess. Paste one real response and I'll
- * correct this in one place.
+ * NOTE: this used to call /api/analytics/exam-analytics/<exam_id>/ instead,
+ * which is a completely different endpoint — it returns one AGGREGATE
+ * object for the whole class (average/highest/lowest marks), not a
+ * per-student array. That mismatch was silently producing an empty
+ * results list every time, even when real (unpublished) results existed.
  */
-const getExamAnalytics = async (examId) => {
+const getExamResultsList = async (examId) => {
 
     try {
 
-        const { data } = await api.get(`/analytics/exam-analytics/${examId}/`);
+        const { data } = await api.get(`/results/faculty/exam-results/${examId}/`);
 
-        return Array.isArray(data) ? data : (data?.results ?? data?.students ?? []);
+        return Array.isArray(data) ? data : [];
 
     }
 
@@ -31,13 +31,9 @@ const getExamAnalytics = async (examId) => {
 };
 
 /**
- * No single "all results across all exams" endpoint exists, so this:
  * 1. gets this faculty's exams (via facultyService, already built)
- * 2. calls exam-analytics for each one
+ * 2. calls the per-student results endpoint for each one
  * 3. flattens into one list + computes summary stats
- *
- * Returns { stats, results } together so the page only needs one call
- * instead of duplicating the exam-fetch and analytics-fetch work twice.
  */
 export const getFacultyResultsData = async (facultyUserId) => {
 
@@ -46,22 +42,23 @@ export const getFacultyResultsData = async (facultyUserId) => {
     const perExamResults = await Promise.all(
         exams.map(async (exam) => {
 
-            const rows = await getExamAnalytics(exam.id);
+            const rows = await getExamResultsList(exam.id);
 
-            return rows.map((row, i) => {
+            return rows.map((row) => {
 
-                const score = row.score ?? row.marks_obtained ?? 0;
-                const total = row.totalMarks ?? row.total_marks ?? exam.totalMarks ?? 0;
-                const percentage = total > 0 ? Math.round((score / total) * 100) : (row.percentage ?? 0);
+                const marks = row.marks ?? 0;
+                const percentage = row.percentage ?? 0;
 
                 return {
-                    id: row.id ?? `${exam.id}-${i}`,
-                    student: row.student ?? row.student_name ?? row.name ?? "Unknown",
+                    id: row.result_id,
+                    examId: exam.id,
+                    student: row.student_name ?? "Unknown",
                     exam: exam.title,
                     date: row.date ?? row.submitted_at ?? "-",
                     result: percentage >= 40 ? "passed" : "failed",
-                    score: total > 0 ? `${score}/${total}` : `${score}`,
-                    timeSpent: row.timeSpent ?? row.time_spent ?? "-"
+                    score: exam.totalMarks ? `${marks}/${exam.totalMarks}` : `${marks}`,
+                    timeSpent: row.timeSpent ?? row.time_spent ?? "-",
+                    isPublished: row.published ?? false,
                 };
 
             });
@@ -85,4 +82,22 @@ export const getFacultyResultsData = async (facultyUserId) => {
         results
     };
 
+};
+
+/**
+ * POST /api/results/publish/<result_id>/
+ * Publishes a single student's result.
+ */
+export const publishResult = async (resultId) => {
+    const { data } = await api.post(`/results/publish/${resultId}/`);
+    return data;
+};
+
+/**
+ * POST /api/results/publish-all/<exam_id>/
+ * Publishes every result for a given exam in one call.
+ */
+export const publishAllResults = async (examId) => {
+    const { data } = await api.post(`/results/publish-all/${examId}/`);
+    return data;
 };

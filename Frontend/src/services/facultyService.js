@@ -17,15 +17,8 @@ const normalizeExam = (exam) => ({
 });
 
 /**
- * GET /api/exams/list/ has no faculty-specific filtering built in, so it
- * returns ALL exams from every faculty member. If exam objects carry a
- * created_by / faculty field, we filter to just this logged-in faculty's
- * exams; if that field doesn't exist, we can't tell them apart and show
- * everything instead (see `showingAllExams` flag returned alongside).
- *
- * Also fetches each exam's question count via
- * GET /api/questions/list/<exam_id>/ (N+1 calls — there's no bulk-count
- * endpoint, same limitation seen elsewhere in this API).
+ * GET /api/faculty/exams/ — this faculty's own exams, with question
+ * counts already attached server-side.
  */
 export const getFacultyExams = async () => {
     const { data } = await api.get("/faculty/exams/");
@@ -42,25 +35,41 @@ export const getFacultyExams = async () => {
 };
 
 /**
- * No aggregate stats endpoint exists — computed client-side from
- * getFacultyExams() above.
+ * GET /api/faculty/dashboard/ — total exams, questions, upcoming exams
+ * for the logged-in faculty. Falls back to computing from
+ * getFacultyExams() if the dashboard endpoint isn't available yet.
  */
-export const getFacultyStats = async (facultyUserId) => {
+export const getFacultyStats = async () => {
 
-    const exams = await getFacultyExams(facultyUserId);
+    try {
 
-    const totalQuestions = exams.reduce((sum, e) => sum + (e.questionCount ?? 0), 0);
+        const { data } = await api.get("/faculty/dashboard/");
 
-    const upcomingExams = exams.filter(
-        (e) => e.status !== "completed" && e.status !== "closed"
-    ).length;
+        return {
+            totalExams: data.total_exams ?? 0,
+            totalQuestions: data.total_questions ?? 0,
+            upcomingExams: data.upcoming_exams ?? 0,
+        };
 
-    return {
-        totalExams: exams.length,
-        totalQuestions,
-        upcomingExams,
-        showingAllExams: exams.showingAllExams
-    };
+    }
+
+    catch {
+
+        const exams = await getFacultyExams();
+
+        const totalQuestions = exams.reduce((sum, e) => sum + (e.questionCount ?? 0), 0);
+
+        const upcomingExams = exams.filter(
+            (e) => e.status !== "completed" && e.status !== "closed"
+        ).length;
+
+        return {
+            totalExams: exams.length,
+            totalQuestions,
+            upcomingExams,
+        };
+
+    }
 
 };
 
@@ -68,6 +77,22 @@ export const getFacultyStats = async (facultyUserId) => {
 export const createExam = async (examData) => {
 
     const { data } = await api.post("/exams/create/", examData);
+
+    return data;
+
+};
+
+export const updateExam = async (examId, examData) => {
+
+    const { data } = await api.put(`/exams/update/${examId}/`, examData);
+
+    return data;
+
+};
+
+export const deleteExam = async (examId) => {
+
+    const { data } = await api.delete(`/exams/delete/${examId}/`);
 
     return data;
 
@@ -94,5 +119,11 @@ export const updateQuestion = async (questionId, data) => {
         `/questions/update/${questionId}/`,
         data
     );
+    return response.data;
+};
+
+
+export const deleteQuestion = async (questionId) => {
+    const response = await api.delete(`/questions/delete/${questionId}/`);
     return response.data;
 };
