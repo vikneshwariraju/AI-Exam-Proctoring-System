@@ -1,0 +1,33 @@
+/* Bootstrap's default --bs-primary is #0d6efd, not our brand blue.
+   These few helpers cover the spots layout.css used a custom color;
+   everything else is now handled by Bootstrap utility classes directly
+   in DashboardLayout.jsx, so this file is intentionally tiny. */
+
+.bg-brand {
+    background-color: #2563EB !important;
+}
+
+.bg-brand-gradient {
+    background: linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED) !important;
+}
+
+.text-brand {
+    color: #2563EB !important;
+}
+
+.nav-link-brand {
+    color: rgba(255, 255, 255, 0.85);
+    background: transparent;
+    border: none;
+    text-align: left;
+}
+
+.nav-link-brand:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link-brand.active {
+    background: #fff;
+    color: #2563EB;
+    font-weight: 600;
+}

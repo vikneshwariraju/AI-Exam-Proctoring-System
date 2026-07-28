@@ -1,34 +1,82 @@
-const QuestionCard = ({ question, index, total, selectedIndex, onSelect }) => (
-  <div className="card" style={{ padding: 28 }}>
-    <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginBottom: 8 }}>
-      Question {index + 1} of {total}
-    </div>
-    <h3 style={{ fontSize: 16.5, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 22 }}>
-      {question.text}
-    </h3>
+import "./../../styles/exam.css";
 
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {question.options.map((opt, i) => (
-        <label
-          key={i}
-          style={{
-            display: "flex", alignItems: "center", gap: 10, padding: "12px 14px",
-            border: `1.5px solid ${selectedIndex === i ? "var(--color-primary)" : "var(--color-border)"}`,
-            borderRadius: "var(--radius-md)", cursor: "pointer",
-            background: selectedIndex === i ? "var(--color-primary-light)" : "#fff",
-          }}
-        >
-          <input
-            type="radio"
-            name={`q-${question.id}`}
-            checked={selectedIndex === i}
-            onChange={() => onSelect(i)}
-          />
-          <span style={{ fontSize: 14, color: "var(--color-text-primary)" }}>{opt}</span>
-        </label>
-      ))}
+const QuestionCard = ({
+  question,
+  index,
+  total,
+  selectedIndex,
+  onSelect,
+}) => {
+  return (
+    <div className="exam-card">
+
+      {/* Question Header */}
+
+      <div className="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+          <small className="text-muted">
+            Question {index + 1} of {total}
+          </small>
+
+          <h4 className="mt-2 fw-bold">
+            {question.text}
+          </h4>
+        </div>
+
+        <div className="badge bg-primary fs-6">
+          1 Mark
+        </div>
+
+      </div>
+
+      {/* Options */}
+
+      <div>
+
+        {question.options.map((option, i) => (
+
+          <div
+            key={i}
+            className={`option-card ${
+              selectedIndex === i
+                ? "option-selected"
+                : ""
+            }`}
+            onClick={() => onSelect(i)}
+          >
+
+            <div className="d-flex align-items-center">
+
+              <input
+                className="form-check-input me-3"
+                type="radio"
+                checked={selectedIndex === i}
+                readOnly
+              />
+
+              <div>
+
+                <strong>
+                  {String.fromCharCode(65 + i)}.
+                </strong>
+
+                {" "}
+
+                {option}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
     </div>
-  </div>
-);
+  );
+};
 
 export default QuestionCard;
