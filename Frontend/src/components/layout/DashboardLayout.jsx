@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Bell, Menu, X, UserCircle, Settings, KeyRound, LogOut
+  Bell, Menu, X, UserCircle, Settings, KeyRound, LogOut, Search
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getNotifications } from "../../services/studentService";
 import "../../styles/layout.css";
 import logo from "../../assets/logo.png";
 
 const NAV_ITEMS = {
   student: [
     { label: "Dashboard", path: "/student/dashboard" },
-    { label: "Available Exams", path: "/student/dashboard" },
+    { label: "Available Exams", path: "/student/exams" },
     { label: "Results", path: "/student/results" },
     { label: "Performance", path: "/student/performance" },
   ],
@@ -18,7 +19,7 @@ const NAV_ITEMS = {
     { label: "Dashboard", path: "/faculty/dashboard" },
     { label: "Create Exam", path: "/faculty/exams/create" },
     { label: "Manage Exams", path: "/faculty/dashboard" },
-    { label: "Questions", path: "/faculty/questions" },
+    { label: "Questions", path: "/faculty/dashboard" },
     { label: "Results", path: "/faculty/results" },
   ],
   admin: [
@@ -35,17 +36,28 @@ const DashboardLayout = ({ children, activeItem }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
   const role = user?.role || "student";
   const navItems = NAV_ITEMS[role] || NAV_ITEMS.student;
   const initials = (user?.name || "U").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   useEffect(() => {
+    getNotifications().then(setNotifications).catch(() => setNotifications([]));
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,7 +80,7 @@ const DashboardLayout = ({ children, activeItem }) => {
       {/* SIDEBAR - hidden below md, shown as fixed column above */}
       <aside
         className="bg-brand-gradient text-white d-none d-md-flex flex-column p-3 sticky-top"
-        style={{ width: 230, height: "100vh", top: 0 }}
+        style={{ width: 230, height: "100vh", top: 0, borderRadius: "0 24px 24px 0" }}
       >
         <div
           className="d-flex align-items-center gap-2 fw-bold mb-4 px-1"
@@ -102,61 +114,116 @@ const DashboardLayout = ({ children, activeItem }) => {
 
         {/* TOPBAR */}
         <div
-          className="d-flex align-items-center justify-content-end gap-3 px-4 bg-white border-bottom"
+          className="d-flex align-items-center justify-content-between gap-3 px-4 bg-white border-bottom"
           style={{ height: 58 }}
         >
-          <div className="position-relative text-secondary" role="button">
-            <Bell size={18} />
-            <span
-              className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+          <div className="position-relative d-none d-md-block" style={{ width: 260 }}>
+            <Search size={15} style={{ position: "absolute", left: 12, top: 10, color: "#94A3B8" }} />
+            <input
+              type="text"
+              placeholder="Search..."
+              style={{
+                width: "100%", height: 36, borderRadius: 10, border: "1px solid var(--color-border, #E5E7EB)",
+                paddingLeft: 34, paddingRight: 12, fontSize: 13, background: "#F9FAFB"
+              }}
             />
           </div>
 
-          <button
-            className="btn d-md-none p-1"
-            onClick={() => setMobileOpen((o) => !o)}
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <div className="d-flex align-items-center gap-3 ms-auto">
 
-          <div className="position-relative" ref={dropdownRef}>
+            <div className="position-relative" ref={notifRef}>
+              <div
+                className="position-relative text-secondary"
+                role="button"
+                onClick={() => setNotifOpen((o) => !o)}
+              >
+                <Bell size={18} />
+                {notifications.length > 0 && (
+                  <span
+                    className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+                  />
+                )}
+              </div>
+
+              {notifOpen && (
+                <div
+                  className="dropdown-menu show shadow-sm p-0"
+                  style={{ position: "absolute", right: 0, top: 30, width: 280, maxWidth: "80vw", maxHeight: 340, overflowY: "auto" }}
+                >
+                  <div className="px-3 py-2 border-bottom fw-semibold" style={{ fontSize: 13.5 }}>
+                    Notifications
+                  </div>
+
+                  {notifications.length === 0 && (
+                    <div className="px-3 py-3 text-secondary" style={{ fontSize: 13 }}>
+                      No new notifications.
+                    </div>
+                  )}
+
+                  {notifications.map((n) => (
+                    <div key={n.id} className="px-3 py-2 border-bottom" style={{ fontSize: 13 }}>
+                      <div>{n.message}</div>
+                      <div className="text-secondary" style={{ fontSize: 11.5, marginTop: 2 }}>{n.time}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
-              className="btn bg-brand text-white rounded-circle d-flex align-items-center justify-content-center p-0"
-              style={{ width: 30, height: 30, fontSize: 12, fontWeight: 700 }}
-              onClick={() => setDropdownOpen((o) => !o)}
+              className="btn d-md-none p-1"
+              onClick={() => setMobileOpen((o) => !o)}
             >
-              {initials}
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
 
-            {dropdownOpen && (
+            <div className="position-relative" ref={dropdownRef}>
               <div
-                className="dropdown-menu show shadow-sm p-0"
-                style={{ position: "absolute", right: 0, top: 42, width: 220 }}
+                className="d-flex align-items-center gap-2"
+                role="button"
+                onClick={() => setDropdownOpen((o) => !o)}
               >
-                <div className="px-3 py-2 border-bottom">
-                  <div className="fw-semibold" style={{ fontSize: 14 }}>{user?.name || "User"}</div>
-                  <span className="badge bg-primary-subtle text-brand text-capitalize mt-1">
-                    {role}
-                  </span>
-                </div>
-
-                <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/profile`)}>
-                  <UserCircle size={15} /> My Profile
-                </button>
-                <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/settings`)}>
-                  <Settings size={15} /> Settings
-                </button>
-                <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/change-password`)}>
-                  <KeyRound size={15} /> Change Password
-                </button>
+                <span className="d-none d-sm-inline text-dark" style={{ fontSize: 13.5 }}>
+                  Welcome back, <b>{(user?.name || "User").split(" ")[0]}</b>
+                </span>
                 <button
-                  className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger border-top"
-                  onClick={handleLogout}
+                  className="btn bg-brand text-white rounded-circle d-flex align-items-center justify-content-center p-0"
+                  style={{ width: 30, height: 30, fontSize: 12, fontWeight: 700 }}
                 >
-                  <LogOut size={15} /> Logout
+                  {initials}
                 </button>
               </div>
-            )}
+
+              {dropdownOpen && (
+                <div
+                  className="dropdown-menu show shadow-sm p-0"
+                  style={{ position: "absolute", right: 0, top: 42, width: 220, maxWidth: "85vw" }}
+                >
+                  <div className="px-3 py-2 border-bottom">
+                    <div className="fw-semibold" style={{ fontSize: 14 }}>{user?.name || "User"}</div>
+                    <span className="badge bg-primary-subtle text-brand text-capitalize mt-1">
+                      {role}
+                    </span>
+                  </div>
+
+                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/profile`)}>
+                    <UserCircle size={15} /> My Profile
+                  </button>
+                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/settings`)}>
+                    <Settings size={15} /> Settings
+                  </button>
+                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo("/change-password")}>
+                    <KeyRound size={15} /> Change Password
+                  </button>
+                  <button
+                    className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger border-top"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={15} /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

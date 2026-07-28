@@ -6,6 +6,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import StudentLogin from "./pages/auth/StudentLogin";
 import StudentRegister from "./pages/auth/StudentRegister";
 import FacultyLogin from "./pages/auth/FacultyLogin";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import ChangePassword from "./pages/auth/ChangePassword";
 
 //student pages 
 import StudentDashboardPage from "./pages/student/Dashboard";
@@ -43,6 +46,16 @@ function App() {
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/student/register" element={<StudentRegister />} />
           <Route path="/faculty/login" element={<FacultyLogin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />}/>
+          <Route path="/reset-password" element={<ResetPassword />}/>
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute allowedRoles={["student","faculty","admin"]}>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           <Route path="/student/dashboard" element={
@@ -72,6 +85,8 @@ function App() {
             <ProtectedRoute allowedRoles={["faculty"]}><AddQuestions /></ProtectedRoute>} />
           <Route path="/faculty/results" element={
             <ProtectedRoute allowedRoles={["faculty"]}><ResultsPage /></ProtectedRoute> } />
+          <Route path="/faculty/profile" element={
+            <ProtectedRoute allowedRoles={["faculty"]}><StudentProfile /></ProtectedRoute>} />
 
           <Route path="/admin/dashboard" element={
             <ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute> } />
@@ -85,6 +100,9 @@ function App() {
             <ProtectedRoute allowedRoles={["admin"]}> <AIAlerts /> </ProtectedRoute>  }/>
           <Route path="/admin/reports" element={
             <ProtectedRoute allowedRoles={["admin"]}> <Reports /> </ProtectedRoute> } />
+          <Route path="/admin/profile" element={
+            <ProtectedRoute allowedRoles={["admin"]}> <StudentProfile /> </ProtectedRoute> } />
+
           <Route path="*" element={<Navigate to="/student/login" replace />} />
       </Routes>
       </BrowserRouter>
