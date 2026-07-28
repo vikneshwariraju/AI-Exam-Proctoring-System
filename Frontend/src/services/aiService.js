@@ -21,3 +21,12 @@ export const getWarnings = async (examId) => {
   const { data } = await api.get(`/ai-proctoring/warnings/${examId}/`);
   return data;
 };
+
+export const detectFace = async (examId, image) => {
+  const { data } = await api.post("/ai-proctoring/detect-face/", {
+    exam: examId,
+    image,
+  });
+
+  return data;
+};
