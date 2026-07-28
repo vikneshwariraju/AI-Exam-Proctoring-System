@@ -77,6 +77,7 @@ export default function StudentLogin() {
         catch (err) {
 
             setServerError(
+                err.response?.data?.error ||
                 err.response?.data?.detail ||
                 "Invalid email or password."
             );
@@ -316,11 +317,9 @@ export default function StudentLogin() {
 
                                 </label>
 
-                                <a href="#">
-
-                                    Forgot Password?
-
-                                </a>
+                                <Link to="/forgot-password">
+    Forgot Password?
+</Link>
 
                             </div>
 

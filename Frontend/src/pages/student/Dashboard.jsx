@@ -2,50 +2,44 @@ import { useState, useEffect } from "react";
 import { FileText, CheckCircle2, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getStudentStats, getStudentExams, getNotifications, getRecentResults } from "../../services/studentService";
+import { getStudentStats, getStudentExams } from "../../services/studentService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import WelcomeCard from "../../components/dashboard/WelcomeCard";
 import StatisticsCard from "../../components/dashboard/StatisticsCard";
 import UpcomingExamCard from "../../components/dashboard/UpcomingExamCard";
-import NotificationCard from "../../components/dashboard/NotificationCard";
-import RecentResultCard from "../../components/dashboard/RecentResultCard";
+import ExamCalendar from "../../components/dashboard/ExamCalendar";
 import Loader from "../../components/common/Loader";
-import "../../styles/dashboard.css";
-import "../../assets/logo.png";
+
 const StudentDashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
   const [exams, setExams] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-  const loadData = async () => {
-    try {
-      const [statsData, examsData, resultsData, notifData] =
-        await Promise.all([
+    const loadData = async () => {
+      try {
+        const [statsData, examsData] = await Promise.all([
           getStudentStats(),
           getStudentExams(),
-          getRecentResults(),
-          getNotifications(),
         ]);
-
-      setStats(statsData);
-      setExams(examsData);
-      setNotifications(notifData);
-      setResults(resultsData);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadData();
-}, []);
+        setStats(statsData);
+        setExams(examsData);
+      } catch (err) {
+        setLoadError(
+          err.response?.data?.error ||
+          err.response?.data?.detail ||
+          "Could not load dashboard data. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   if (loading) {
     return (
@@ -55,25 +49,36 @@ const StudentDashboardPage = () => {
     );
   }
 
-  const upcoming = exams.filter((e) => e.status == "available" || e.status=="upcoming");
-  const completed = results;
+  if (loadError) {
+    return (
+      <DashboardLayout activeItem="Dashboard">
+        <div className="card" style={{ padding: 20, color: "#b91c1c" }}>
+          {loadError}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const upcoming = exams.filter((e) => e.status !== "completed");
 
   const statCards = [
-    { label: "Total Exams", value: stats.totalExams, icon: <FileText size={17} color="#2563EB" />, bg: "#EFF6FF" },
-    { label: "Completed", value: stats.completedExams, icon: <CheckCircle2 size={17} color="#059669" />, bg: "#ECFDF5" },
-    { label: "Average Score", value: `${stats.averageScore}%`, icon: <TrendingUp size={17} color="#7C3AED" />, bg: "#F3E8FF" },
+    { label: "Total Exams", value: stats.totalExams, icon: <FileText size={17} /> },
+    { label: "Completed", value: stats.completedExams, icon: <CheckCircle2 size={17} /> },
+    { label: "Average Score", value: `${stats.averageScore}%`, icon: <TrendingUp size={17} /> },
   ];
 
   return (
     <DashboardLayout activeItem="Dashboard">
-      <WelcomeCard name={user?.name} />
-      
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-        {statCards.map((c) => <StatisticsCard key={c.label} {...c} />)}
+      <div className="row g-3 mb-4">
+        {statCards.map((c) => (
+          <div key={c.label} className="col-6 col-md-4">
+            <StatisticsCard {...c} />
+          </div>
+        ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
-        <div>
+      <div className="row g-3">
+        <div className="col-12 col-lg-8">
           <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 12px", color: "var(--color-text-primary)" }}>
             Upcoming &amp; Available Exams
           </h3>
@@ -87,9 +92,9 @@ const StudentDashboardPage = () => {
           ))}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <NotificationCard notifications={notifications} />
-          <RecentResultCard results={completed} />
+        <div className="col-12 col-lg-4">
+          {/* Calendar replaces the old Notifications + Recent Results panels */}
+          <ExamCalendar exams={exams} />
         </div>
       </div>
     </DashboardLayout>

@@ -66,8 +66,9 @@ export default function FacultyLogin() {
         catch (err) {
 
             setServerError(
+                err.response?.data?.error ||
                 err.response?.data?.detail ||
-                "Invalid email or password."
+                "Something went Wrong"
             );
 
         }
