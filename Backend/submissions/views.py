@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from exams.models import Exam
 from questions.models import Question
-from .models import StudentAnswer
+from .models import StudentAnswer, ExamAttempt
 from .serializers import StudentAnswerSerializer
 
 
@@ -13,6 +13,11 @@ class StartExamView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, exam_id):
+        camera_verified = request.query_params.get('camera_verified')
+
+        if camera_verified != 'true':
+            return Response({'error': 'Camera must be enabled before starting the exam'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
@@ -23,6 +28,20 @@ class StartExamView(APIView):
             return Response({'error': 'Exam has not started yet'}, status=status.HTTP_400_BAD_REQUEST)
         if now > exam.end_time:
             return Response({'error': 'Exam has already ended'}, status=status.HTTP_400_BAD_REQUEST)
+
+        attempt, created = ExamAttempt.objects.get_or_create(
+            student=request.user,
+            exam=exam
+        )
+
+        if attempt.submitted:
+            return Response({'error': 'You have already submitted this exam'}, status=status.HTTP_400_BAD_REQUEST)
+
+        elapsed_seconds = (now - attempt.started_at).total_seconds()
+        remaining_seconds = max(0, (exam.duration * 60) - elapsed_seconds)
+
+        if remaining_seconds <= 0:
+            return Response({'error': 'Your time for this exam has expired'}, status=status.HTTP_400_BAD_REQUEST)
 
         questions = Question.objects.filter(exam=exam)
         questions_data = [{
@@ -40,6 +59,7 @@ class StartExamView(APIView):
             'title': exam.title,
             'duration': exam.duration,
             'total_marks': exam.total_marks,
+            'remaining_seconds': int(remaining_seconds),
             'questions': questions_data
         }, status=status.HTTP_200_OK)
 
@@ -77,3 +97,12 @@ class SubmitAnswerView(APIView):
             serializer.save(student=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetSavedAnswersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, exam_id):
+        answers = StudentAnswer.objects.filter(student=request.user, exam_id=exam_id)
+        data = {ans.question_id: ans.selected_option for ans in answers}
+        return Response(data, status=status.HTTP_200_OK)
