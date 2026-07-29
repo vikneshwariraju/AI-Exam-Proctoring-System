@@ -17,9 +17,7 @@ const NAV_ITEMS = {
   ],
   faculty: [
     { label: "Dashboard", path: "/faculty/dashboard" },
-    { label: "Create Exam", path: "/faculty/exams/create" },
-    { label: "Manage Exams", path: "/faculty/dashboard" },
-    { label: "Questions", path: "/faculty/dashboard" },
+    { label: "Manage Exams", path: "/faculty/exams" },
     { label: "Results", path: "/faculty/results" },
   ],
   admin: [

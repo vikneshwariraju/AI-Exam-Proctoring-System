@@ -3,7 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getExamDetails,
   getExamQuestions,
-  submitExam,
+  getSavedAnswers,
+  submitAnswer,
+  finalizeExam,
 } from "../../services/examService";
 import { logWarning } from "../../services/aiService";
 
@@ -22,6 +24,7 @@ const AttendExam = () => {
   const [exam, setExam] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -30,37 +33,80 @@ const AttendExam = () => {
 
   // Load Exam
   useEffect(() => {
-    setLoading(true);
-    setLoadError("");
+    let cancelled = false;
 
-    Promise.all([
-      getExamDetails(examId),
-      getExamQuestions(examId),
-    ])
-      .then(([e, q]) => {
-        if (!e) {
+    const load = async () => {
+      setLoading(true);
+      setLoadError("");
+
+      // Backend requires camera_verified=true or /submissions/start/ 400s
+      // with "Camera must be enabled before starting the exam". We confirm
+      // camera access here (not just on the instructions page) so a direct
+      // link or a page refresh still works correctly.
+      let cameraVerified = false;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        stream.getTracks().forEach((track) => track.stop());
+        cameraVerified = true;
+      } catch {
+        if (!cancelled) {
+          setLoadError("Camera access is required to start this exam. Please allow camera permission and reload the page.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const [examDetails, startData, savedAnswers] = await Promise.all([
+          getExamDetails(examId),
+          getExamQuestions(examId, cameraVerified),
+          getSavedAnswers(examId),
+        ]);
+
+        if (cancelled) return;
+
+        if (!examDetails) {
           setLoadError("Exam not found.");
           return;
         }
 
-        if (!q || q.length === 0) {
+        if (!startData?.questions || startData.questions.length === 0) {
           setLoadError("No questions found.");
           return;
         }
 
-        setExam(e);
-        setQuestions(q);
-      })
-      .catch((err) => {
-        console.error(err);
+        setExam(examDetails);
+        setQuestions(startData.questions);
+        setRemainingSeconds(startData.remaining_Seconds);
 
+        // Restore any answers already saved on the backend (e.g. the
+        // student left and came back, or refreshed mid-exam).
+        if (savedAnswers && typeof savedAnswers === "object") {
+          const restored = {};
+          Object.entries(savedAnswers).forEach(([questionId, selectedOption]) => {
+            restored[questionId] = Number.isNaN(Number(selectedOption))
+              ? selectedOption
+              : Number(selectedOption);
+          });
+          setAnswers(restored);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error(err);
         setLoadError(
           err.response?.data?.error ||
             err.response?.data?.detail ||
             "Unable to load exam."
         );
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [examId]);
 
   // AI Tab Switch Detection
@@ -78,9 +124,7 @@ const AttendExam = () => {
         console.log("Warning Logged:", response);
 
         if (response.flagged) {
-          alert(
-            "You have exceeded the warning limit. Faculty has been notified."
-          );
+          alert(`Warning limit exceeded due to repeated: ${response.warning_type}. Faculty has been notified.`);
         }
       } catch (err) {
         console.error("Warning failed:", err);
@@ -132,17 +176,28 @@ const AttendExam = () => {
   const currentQuestion = questions[currentIndex];
 
   const handleSelect = (optionIndex) => {
+    // Update the UI immediately...
     setAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: optionIndex,
     }));
+
+    // ...and sync to the backend in the background on every change, so
+    // progress survives a closed tab/crash instead of only being saved
+    // at the very end.
+    submitAnswer(examId, currentQuestion.id, optionIndex).catch((err) => {
+      console.error("Failed to save answer:", err.response?.data || err);
+    });
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
 
     try {
-      const result = await submitExam(examId, answers);
+      // Answers were already synced to the backend as they were selected
+      // (see handleSelect), so finalizing just triggers grading and
+      // fetches the result.
+      const result = await finalizeExam(examId);
 
       navigate(`/student/results/${examId}`, {
         state: result,
@@ -159,6 +214,8 @@ const AttendExam = () => {
       setSubmitting(false);
     }
   };
+
+  const durationMinutes = remainingSeconds != null ? remainingSeconds / 60 : exam.duration;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
@@ -178,7 +235,7 @@ const AttendExam = () => {
         <h5 style={{ margin: 0 }}>{exam.title}</h5>
 
         <Timer
-          durationMinutes={exam.duration}
+          durationMinutes={durationMinutes}
           onTimeUp={handleSubmit}
         />
       </div>

@@ -7,10 +7,11 @@ const DETECTION_INTERVAL = 2000;
 
 const WebcamProctor = ({ examId }) => {
   const webcamRef = useRef(null);
-
+  const lastWarningType = useRef(null);
   const [cameraError, setCameraError] = useState("");
   const [status, setStatus] = useState("Starting Camera...");
   const [warningCount, setWarningCount] = useState(0);
+  const [alertShown, setAlertShown] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -25,24 +26,33 @@ const WebcamProctor = ({ examId }) => {
 
         if (res.face_count === 1) {
           setStatus("✅ Face Detected");
-        } else if (res.face_count === 0) {
+          setAlertShown(false);
+          lastWarningType.current = null;
+        } 
+        else if (res.face_count === 0) {
           setStatus("❌ Face Missing");
-
-          if (res.warning_type) {
+          if (
+            res.warning_type &&
+            lastWarningType.current !== res.warning_type
+          ) {
+            lastWarningType.current = res.warning_type;
             setWarningCount(res.warning_count || 0);
           }
-        } else {
+        } 
+        else {
           setStatus("⚠ Multiple Faces");
-
-          if (res.warning_type) {
-            setWarningCount(res.warning_count || 0);
-          }
+        if (
+          res.warning_type &&
+          lastWarningType.current !== res.warning_type
+        ) {
+          lastWarningType.current = res.warning_type;
+          setWarningCount(res.warning_count || 0);
+        }
         }
 
-        if (res.flagged) {
-          alert(
-            "Warning limit exceeded. Faculty has been notified."
-          );
+        if (res.flagged && !alertShown) {
+          setAlertShown(true);
+          alert(`Warning limit exceeded due to repeated: ${data.warning_type}. Faculty has been notified.`);
         }
       } catch (err) {
         console.error(err);

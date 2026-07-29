@@ -1,7 +1,8 @@
 import axios from "axios";
-
+//Base url for all API calls 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
+//create reusable axios and every req use this base and json as default
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },

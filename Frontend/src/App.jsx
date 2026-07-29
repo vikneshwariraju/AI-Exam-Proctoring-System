@@ -25,6 +25,7 @@ import ResultsPage from "./pages/faculty/ResultsPage";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import CreateExam from "./pages/faculty/CreateExam";
 import AddQuestions from "./pages/faculty/AddQuestions";
+import ManageExams from "./pages/faculty/ManageExams";
 
 //admin page
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -79,8 +80,12 @@ function App() {
 
           <Route path="/faculty/dashboard" element={
             <ProtectedRoute allowedRoles={["faculty"]}><FacultyDashboard /></ProtectedRoute>} />
+          <Route  path="/faculty/exams" element={
+             <ProtectedRoute allowedRoles={["faculty"]}>  <ManageExams /> </ProtectedRoute>} />
           <Route path="/faculty/exams/create" element={
             <ProtectedRoute allowedRoles={["faculty"]}><CreateExam /></ProtectedRoute>} />
+          <Route path="/faculty/exams/edit/:examId" element={
+            <ProtectedRoute allowedRoles={["faculty"]}> <CreateExam/> </ProtectedRoute>}/>
           <Route path="/faculty/exams/:examId/questions" element={
             <ProtectedRoute allowedRoles={["faculty"]}><AddQuestions /></ProtectedRoute>} />
           <Route path="/faculty/results" element={
