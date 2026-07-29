@@ -9,6 +9,7 @@ from questions.models import Question
 from submissions.models import StudentAnswer
 from .models import Result, Notification
 from .serializers import ResultSerializer
+from submissions.models import ExamAttempt
 
 
 class CalculateResultView(APIView):
@@ -44,9 +45,9 @@ class CalculateResultView(APIView):
             percentage=round(percentage, 2),
             published=False
         )
-
+        ExamAttempt.objects.filter(student=request.user, exam=exam).update(submitted=True)
         return Response({'message': 'Exam submitted successfully'}, status=status.HTTP_201_CREATED)
-
+   
 
 class ViewResultView(APIView):
     """Student views their own result - only visible if published."""
