@@ -13,6 +13,8 @@ import numpy as np
 import base64
 import os
 from django.conf import settings
+from django.db.models import Count
+from users.permissions import IsAdmin
 
 class LogWarningView(APIView):
     permission_classes = [IsAuthenticated]
@@ -162,4 +164,31 @@ class DetectFaceView(APIView):
         except Exception as e:
             return Response({'error': f'Image processing failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
+class AdminAlertsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        logs = AILog.objects.select_related('student', 'exam').all()
+
+        grouped = {}
+        for log in logs:
+            key = (log.student.id, log.exam.id)
+            if key not in grouped:
+                grouped[key] = {
+                    'student_id': log.student.id,
+                    'student_name': log.student.name,
+                    'exam_id': log.exam.id,
+                    'exam_title': log.exam.title,
+                    'warning_count': 0,
+                    'warnings': []
+                }
+            grouped[key]['warning_count'] += 1
+            grouped[key]['warnings'].append({
+                'type': log.warning_type,
+                'timestamp': log.timestamp
+            })
+
+        result = [v for v in grouped.values() if v['warning_count'] >= 3]
+
+        return Response(result, status=status.HTTP_200_OK)
 
