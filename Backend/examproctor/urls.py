@@ -4,6 +4,7 @@ from django.urls import path, include
 from results.views import StudentDashboardView, RecentResultsView, StudentNotificationsView
 from exams.views import UpcomingExamsView, FacultyDashboardView, FacultyExamsView
 from users.views import AdminDashboardView, ListStudentsView, ListFacultyView, AdminExamsView
+from ai_proctoring.views import AdminAlertsView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +29,5 @@ urlpatterns = [
     path('api/admin/students/', ListStudentsView.as_view()),
     path('api/admin/faculty/', ListFacultyView.as_view()),
     path('api/admin/exams/', AdminExamsView.as_view()),
+    path('api/admin/alerts/', AdminAlertsView.as_view()),
 ]
