@@ -15,3 +15,11 @@ class StudentAnswer(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.exam.title} - Q{self.question.id}"
+class ExamAttempt(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='exam_attempts')
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='attempts')
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('student', 'exam')

@@ -6,6 +6,8 @@ from users.permissions import IsFaculty
 from exams.models import Exam
 from .models import AILog
 from .serializers import AILogSerializer
+from django.utils import timezone
+from datetime import timedelta
 import cv2
 import numpy as np
 import base64
@@ -13,7 +15,6 @@ import os
 from django.conf import settings
 
 class LogWarningView(APIView):
-    """Called by the frontend whenever it detects suspicious activity."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -25,14 +26,24 @@ class LogWarningView(APIView):
         except Exam.DoesNotExist:
             return Response({'error': 'Exam not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        log = AILog.objects.create(
+        cooldown_seconds = 10
+        recent_same_warning = AILog.objects.filter(
             student=request.user,
             exam=exam,
-            warning_type=warning_type
-        )
+            warning_type=warning_type,
+            timestamp__gte=timezone.now() - timedelta(seconds=cooldown_seconds)
+        ).exists()
+
+        if not recent_same_warning:
+            log = AILog.objects.create(
+                student=request.user,
+                exam=exam,
+                warning_type=warning_type
+            )
+        else:
+            log = AILog.objects.filter(student=request.user, exam=exam, warning_type=warning_type).latest('timestamp')
 
         warning_count = AILog.objects.filter(student=request.user, exam=exam).count()
-
         flagged = warning_count >= 3
 
         serializer = AILogSerializer(log)
@@ -120,10 +131,19 @@ class DetectFaceView(APIView):
             elif face_count > 1:
                 warning_type = 'multiple_faces'
 
-            warning_count = None
-            flagged = False
+            warning_count = AILog.objects.filter(student=request.user, exam=exam).count()
+            flagged = warning_count >= 3
 
             if warning_type:
+                cooldown_seconds = 30
+                recent_same_warning = AILog.objects.filter(
+                    student=request.user,
+                    exam=exam,
+                    warning_type=warning_type,
+                    timestamp__gte=timezone.now() - timedelta(seconds=cooldown_seconds)
+                    ).exists()
+
+            if not recent_same_warning:
                 AILog.objects.create(
                     student=request.user,
                     exam=exam,
@@ -141,3 +161,5 @@ class DetectFaceView(APIView):
 
         except Exception as e:
             return Response({'error': f'Image processing failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
