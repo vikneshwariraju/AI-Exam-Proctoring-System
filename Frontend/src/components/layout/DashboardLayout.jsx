@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Bell, Menu, X, UserCircle, Settings, KeyRound, LogOut, Search
+  Bell, Menu, X, UserCircle, Settings, KeyRound, LogOut
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getNotifications } from "../../services/studentService";
@@ -17,10 +17,9 @@ const NAV_ITEMS = {
   ],
   faculty: [
     { label: "Dashboard", path: "/faculty/dashboard" },
-    { label: "Create Exam", path: "/faculty/exams/create" },
-    { label: "Manage Exams", path: "/faculty/dashboard" },
-    { label: "Questions", path: "/faculty/dashboard" },
+    { label: "Manage Exams", path: "/faculty/exams" },
     { label: "Results", path: "/faculty/results" },
+    { label: "AI Alerts", path: "/faculty/ai-alerts" },
   ],
   admin: [
     { label: "Dashboard", path: "/admin/dashboard" },
@@ -117,18 +116,6 @@ const DashboardLayout = ({ children, activeItem }) => {
           className="d-flex align-items-center justify-content-between gap-3 px-4 bg-white border-bottom"
           style={{ height: 58 }}
         >
-          <div className="position-relative d-none d-md-block" style={{ width: 260 }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: 10, color: "#94A3B8" }} />
-            <input
-              type="text"
-              placeholder="Search..."
-              style={{
-                width: "100%", height: 36, borderRadius: 10, border: "1px solid var(--color-border, #E5E7EB)",
-                paddingLeft: 34, paddingRight: 12, fontSize: 13, background: "#F9FAFB"
-              }}
-            />
-          </div>
-
           <div className="d-flex align-items-center gap-3 ms-auto">
 
             <div className="position-relative" ref={notifRef}>
@@ -208,9 +195,6 @@ const DashboardLayout = ({ children, activeItem }) => {
 
                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/profile`)}>
                     <UserCircle size={15} /> My Profile
-                  </button>
-                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo(`/${role}/settings`)}>
-                    <Settings size={15} /> Settings
                   </button>
                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" onClick={() => goTo("/change-password")}>
                     <KeyRound size={15} /> Change Password

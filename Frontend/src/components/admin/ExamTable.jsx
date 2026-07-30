@@ -37,9 +37,25 @@ const ExamTable = ({ exams }) => {
 
               <td>{exam.totalMarks}</td>
 
-              <td>{exam.startTime}</td>
+              <td>
+  {exam.startTime
+    ? new Date(exam.startTime).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-"}
+</td>
 
-              <td>{exam.endTime}</td>
+              <td>
+  {exam.endTime
+    ? new Date(exam.endTime).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-"}
+</td>
 
             </tr>
 

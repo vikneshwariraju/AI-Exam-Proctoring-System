@@ -4,6 +4,8 @@ import {
   UserCheck,
   BookOpen,
   AlertTriangle,
+  Shield,
+  Layers,
   Plus,
   X,
 } from "lucide-react";
@@ -20,6 +22,7 @@ import ExamTable from "../../components/admin/ExamTable";
 
 import {
   getDashboardStats,
+  getUserStats,
   getAllStudents,
   getAllFaculty,
   getAllExams,
@@ -29,6 +32,7 @@ import {
 const AdminDashboard = () => {
 
   const [stats, setStats] = useState(null);
+  const [userStats, setUserStats] = useState(null);
   const [students, setStudents] = useState([]);
   const [faculty, setFaculty] = useState([]);
   const [exams, setExams] = useState([]);
@@ -49,17 +53,20 @@ const AdminDashboard = () => {
 
         const [
           statsData,
+          userStatsData,
           studentsData,
           facultyData,
           examsData,
         ] = await Promise.all([
           getDashboardStats(),
+          getUserStats(),
           getAllStudents(),
           getAllFaculty(),
           getAllExams(),
         ]);
 
         setStats(statsData);
+        setUserStats(userStatsData);
         setStudents(studentsData);
         setFaculty(facultyData);
         setExams(examsData);
@@ -139,6 +146,22 @@ const AdminDashboard = () => {
             label="AI Alerts"
             value={stats.flaggedAlerts ?? "—"}
             icon={<AlertTriangle size={18} />}
+          />
+        </div>
+
+        <div className="col-6 col-md-3">
+          <StatisticsCard
+            label="Total Admins"
+            value={userStats?.totalAdmins ?? "—"}
+            icon={<Shield size={18} />}
+          />
+        </div>
+
+        <div className="col-6 col-md-3">
+          <StatisticsCard
+            label="Total Users"
+            value={userStats?.totalUsers ?? "—"}
+            icon={<Layers size={18} />}
           />
         </div>
       </div>

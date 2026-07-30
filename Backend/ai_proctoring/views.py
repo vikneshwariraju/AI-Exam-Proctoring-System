@@ -113,34 +113,17 @@ class DetectFaceView(APIView):
             image_bytes = base64.b64decode(image_data)
             np_arr = np.frombuffer(image_bytes, np.uint8)
             img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-            if img is None or img.shape[0] < 100 or img.shape[1] < 100:
-                return Response({'error': 'Image is too small or invalid for reliable detection'}, status=status.HTTP_400_BAD_REQUEST)
 
-            frontal_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-            profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_profileface.xml")
+            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            face_cascade = cv2.CascadeClassifier(cascade_path)
 
-            if frontal_cascade.empty() or profile_cascade.empty():
-                raise Exception("Failed to load one or more Haar Cascade files")
+            if face_cascade.empty():
+                raise Exception(f"Failed to load Haar Cascade XML file from: {cascade_path}")
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
 
-            frontal_faces = frontal_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(25, 25))
-            profile_faces = profile_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(25, 25))
-
-            def boxes_overlap(box1, box2):
-                x1, y1, w1, h1 = box1
-                x2, y2, w2, h2 = box2
-                return not (x1 + w1 < x2 or x2 + w2 < x1 or y1 + h1 < y2 or y2 + h2 < y1)
-
-            frontal_list = list(frontal_faces)
-            profile_list = list(profile_faces)
-
-            unique_profile = [
-                p for p in profile_list
-                if not any(boxes_overlap(p, f) for f in frontal_list)
-            ]
-
-            face_count = len(frontal_list) + len(unique_profile)
+            face_count = len(faces)
 
             warning_type = None
             if face_count == 0:

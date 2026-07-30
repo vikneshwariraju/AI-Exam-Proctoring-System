@@ -187,35 +187,6 @@ class StudentNotificationsView(APIView):
             'id': n.id,
             'message': n.message,
             'time': f"{timesince(n.created_at)} ago",
-            'type': n.type,
-            'is_read': n.is_read
+            'type': n.type
         } for n in notifications]
         return Response(data)
-class MarkNotificationReadView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, notification_id):
-        try:
-            notification = Notification.objects.get(id=notification_id, student=request.user)
-        except Notification.DoesNotExist:
-            return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        notification.is_read = True
-        notification.save()
-        return Response({'message': 'Marked as read'}, status=status.HTTP_200_OK)
-
-
-class MarkAllNotificationsReadView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        Notification.objects.filter(student=request.user, is_read=False).update(is_read=True)
-        return Response({'message': 'All notifications marked as read'}, status=status.HTTP_200_OK)
-
-
-class UnreadNotificationCountView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        count = Notification.objects.filter(student=request.user, is_read=False).count()
-        return Response({'unread_count': count})

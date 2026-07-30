@@ -14,6 +14,8 @@ const ExamInstructions = () => {
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [startingExam, setStartingExam] = useState(false);
+  const [cameraError, setCameraError] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -60,6 +62,32 @@ const ExamInstructions = () => {
       </DashboardLayout>
     );
   }
+  const handleStartExam = async () => {
+  setCameraError("");
+  setStartingExam(true);
+
+  try {
+    // Ask for webcam permission
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false,
+    });
+
+    // Stop preview stream.
+    // The actual exam page will reopen the webcam.
+    stream.getTracks().forEach((track) => track.stop());
+
+    navigate(`/student/exams/${examId}/attend`);
+  } catch (err) {
+    console.error(err);
+
+    setCameraError(
+      "Camera access is required to start the exam. Please allow camera permission and try again."
+    );
+  } finally {
+    setStartingExam(false);
+  }
+};
 
   return (
     <DashboardLayout activeItem="Available Exams">
@@ -97,13 +125,27 @@ const ExamInstructions = () => {
             {exam.description}
           </p>
         )}
-
+        {cameraError && (
+  <div
+    style={{
+      background: "#FEF2F2",
+      color: "#B91C1C",
+      padding: "12px",
+      borderRadius: "8px",
+      marginBottom: "15px",
+      fontSize: "13px",
+    }}
+  >
+    {cameraError}
+  </div>
+)}
         <button
-          className="btn-primary-brand"
-          onClick={() => navigate(`/student/exams/${examId}/attend`)}
-        >
-          Let's start the exam
-        </button>
+  className="btn-primary-brand"
+  onClick={handleStartExam}
+  disabled={startingExam}
+>
+  {startingExam ? "Checking Camera..." : "Let's Start the Exam"}
+</button>
 
         <hr style={{ margin: "28px 0", border: "none", borderTop: "1px solid var(--color-border)" }} />
 

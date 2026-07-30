@@ -1,27 +1,37 @@
 import api from "./authService";
 
-/**
- * POST /api/users/create-faculty/ — admin-only, via IsAdmin permission.
- */
+/**create faculty*/
 export const createFaculty = async (formData) => {
-
     const { data } = await api.post("/users/create-faculty/", formData);
-
     return { ...data, status: "active" };
-
 };
 
-/**
- * GET /api/admin/dashboard/ — Total students, faculty, active exams,
- * flagged alerts. Falls back gracefully (null/empty) if the endpoint
- * errors so the UI can show "—" instead of crashing.
- */
-export const getDashboardStats = async () => {
-
+/**User stats (admin only) — total_admins/total_users aren't covered by
+ * /admin/dashboard/, so this is a separate call. */
+export const getUserStats = async () => {
     try {
+        const { data } = await api.get("/users/stats/");
+        return {
+            totalStudents: data.total_students ?? 0,
+            totalFaculty: data.total_faculty ?? 0,
+            totalAdmins: data.total_admins ?? 0,
+            totalUsers: data.total_users ?? 0,
+        };
+    }
+    catch {
+        return {
+            totalStudents: null,
+            totalFaculty: null,
+            totalAdmins: null,
+            totalUsers: null,
+        };
+    }
+};
 
+/**Admin dashboard stats */
+export const getDashboardStats = async () => {
+    try {
         const { data } = await api.get("/admin/dashboard/");
-
         return {
             totalStudents: data.total_students ?? 0,
             totalFaculty: data.total_faculty ?? 0,
@@ -29,11 +39,8 @@ export const getDashboardStats = async () => {
             flaggedAlerts: data.flagged_alerts ?? 0,
             statsEndpointMissing: false
         };
-
     }
-
     catch {
-
         return {
             totalStudents: null,
             totalFaculty: null,
@@ -41,62 +48,41 @@ export const getDashboardStats = async () => {
             flaggedAlerts: null,
             statsEndpointMissing: true
         };
-
     }
-
 };
 
-/** GET /api/admin/students/ — list all students */
+/**students list*/
 export const getAllStudents = async () => {
-
     try {
-
         const { data } = await api.get("/admin/students/");
-
         return (Array.isArray(data) ? data : []).map((u) => ({
             ...u,
             status: u.is_active === false ? "inactive" : "active"
         }));
-
     }
-
     catch {
-
         return [];
-
     }
-
 };
 
-/** GET /api/admin/faculty/ — list all faculty */
+/**faculty list */
 export const getAllFaculty = async () => {
-
     try {
-
         const { data } = await api.get("/admin/faculty/");
-
         return (Array.isArray(data) ? data : []).map((u) => ({
             ...u,
             status: u.is_active === false ? "inactive" : "active"
         }));
-
     }
-
     catch {
-
         return [];
-
     }
-
 };
 
-/** GET /api/admin/exams/ — all exams with faculty name attached */
+/**exam list */
 export const getAllExams = async () => {
-
     try {
-
         const { data } = await api.get("/admin/exams/");
-
         return Array.isArray(data) ? data.map((exam) => ({
             id: exam.id,
             title: exam.title ?? exam.name ?? "Untitled Exam",
@@ -105,13 +91,8 @@ export const getAllExams = async () => {
             startTime: exam.start_time ?? exam.startTime ?? null,
             endTime: exam.end_time ?? exam.endTime ?? null,
         })) : [];
-
     }
-
     catch {
-
         return [];
-
     }
-
 };
