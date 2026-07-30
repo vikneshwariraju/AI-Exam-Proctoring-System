@@ -26,6 +26,7 @@ import FacultyDashboard from "./pages/faculty/Dashboard";
 import CreateExam from "./pages/faculty/CreateExam";
 import AddQuestions from "./pages/faculty/AddQuestions";
 import ManageExams from "./pages/faculty/ManageExams";
+import FacultyAIAlerts from "./pages/faculty/AIAlerts";
 
 //admin page
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -90,6 +91,14 @@ function App() {
             <ProtectedRoute allowedRoles={["faculty"]}><AddQuestions /></ProtectedRoute>} />
           <Route path="/faculty/results" element={
             <ProtectedRoute allowedRoles={["faculty"]}><ResultsPage /></ProtectedRoute> } />
+          <Route
+    path="/faculty/ai-alerts"
+    element={
+        <ProtectedRoute allowedRoles={["faculty"]}>
+            <FacultyAIAlerts />
+        </ProtectedRoute>
+    }
+/>
           <Route path="/faculty/profile" element={
             <ProtectedRoute allowedRoles={["faculty"]}><StudentProfile /></ProtectedRoute>} />
 

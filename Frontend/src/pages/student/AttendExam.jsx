@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getExamDetails,
   getExamQuestions,
-  getSavedAnswers,
   submitAnswer,
   finalizeExam,
 } from "../../services/examService";
@@ -39,28 +38,10 @@ const AttendExam = () => {
       setLoading(true);
       setLoadError("");
 
-      // Backend requires camera_verified=true or /submissions/start/ 400s
-      // with "Camera must be enabled before starting the exam". We confirm
-      // camera access here (not just on the instructions page) so a direct
-      // link or a page refresh still works correctly.
-      let cameraVerified = false;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        stream.getTracks().forEach((track) => track.stop());
-        cameraVerified = true;
-      } catch {
-        if (!cancelled) {
-          setLoadError("Camera access is required to start this exam. Please allow camera permission and reload the page.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const [examDetails, startData, savedAnswers] = await Promise.all([
+        const [examDetails, startData] = await Promise.all([
           getExamDetails(examId),
-          getExamQuestions(examId, cameraVerified),
-          getSavedAnswers(examId),
+          getExamQuestions(examId),
         ]);
 
         if (cancelled) return;
@@ -77,19 +58,10 @@ const AttendExam = () => {
 
         setExam(examDetails);
         setQuestions(startData.questions);
-        setRemainingSeconds(startData.remaining_Seconds);
+        setRemainingSeconds(startData.duration*60);
 
         // Restore any answers already saved on the backend (e.g. the
         // student left and came back, or refreshed mid-exam).
-        if (savedAnswers && typeof savedAnswers === "object") {
-          const restored = {};
-          Object.entries(savedAnswers).forEach(([questionId, selectedOption]) => {
-            restored[questionId] = Number.isNaN(Number(selectedOption))
-              ? selectedOption
-              : Number(selectedOption);
-          });
-          setAnswers(restored);
-        }
       } catch (err) {
         if (cancelled) return;
         console.error(err);

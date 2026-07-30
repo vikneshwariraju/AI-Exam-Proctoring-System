@@ -24,38 +24,24 @@ export const getExamDetails = async (examId) => {
 };
 
 //Exam Questions
-export const getExamQuestions = async (examId, cameraVerified = true) => {
-  const { data } = await api.get(`/submissions/start/${examId}/?camera_verified=${cameraVerified}`);
-  const rawQuestions = Array.isArray(data)
-    ? data
-    : data.questions || [];
+export const getExamQuestions = async (examId) => {
+  const { data } = await api.get(`/submissions/start/${examId}/`);
 
-  return rawQuestions.map((q) => ({
-    id: q.id,
-    text:
-      q.text ||
-      q.question_text ||
-      q.question ||
-      "",
-
-    options:
-      q.options ||
-      q.choices ||
-      [
+  return {
+    questions: data.questions.map((q) => ({
+      id: q.id,
+      text: q.question_text,
+      options: [
         q.option1,
         q.option2,
         q.option3,
         q.option4,
-      ].filter(Boolean) ||
-      [
-        q.option_a,
-        q.option_b,
-        q.option_c,
-        q.option_d,
-      ].filter(Boolean),
-    marks: q.marks ?? q.mark ?? 1,
-    correctIndex: q.correctIndex ?? q.correct_index ?? undefined,
-  }));
+      ],
+      difficulty: q.difficulty,
+    })),
+    duration: data.duration,
+    totalMarks: data.total_marks,
+  };
 };
 
 /**submit exam*/
@@ -112,10 +98,5 @@ export const getStudentPerformance = async (examId) => {
 
 export const finalizeExam = async (examId) => {
     const { data } = await api.post(`/results/calculate/${examId}/`);
-    return data;
-};
-
-export const getSavedAnswers = async (examId) => {
-    const { data } = await api.get(`/submissions/saved-answers/${examId}/`);
     return data;
 };

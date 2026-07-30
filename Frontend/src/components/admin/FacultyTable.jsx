@@ -30,7 +30,15 @@ const FacultyTable = ({ faculty }) => {
 
               <td>{user.email}</td>
 
-              <td>{user.created_at}</td>
+              <td>
+  {user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-"}
+</td>
 
             </tr>
 
