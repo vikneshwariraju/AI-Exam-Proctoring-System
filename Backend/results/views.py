@@ -84,7 +84,10 @@ class FacultyViewExamResultsView(APIView):
             'result_id': r.id,
             'student_id': r.student.id,
             'student_name': r.student.name,
+            'exam_id': r.exam.id,
+            'exam_title': r.exam.title,
             'marks': r.marks,
+            'submitted_at': r.created_at,
             'percentage': r.percentage,
             'published': r.published
         } for r in results]
