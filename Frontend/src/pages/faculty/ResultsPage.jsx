@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Users, FileText, CheckCircle2, XCircle, Send, CheckCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { getFacultyResultsData, publishResult, publishAllResults } from "../../services/resultsService";
+import { getExamResults, publishResult, publishAllResults } from "../../services/resultsService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import StatisticsCard from "../../components/dashboard/StatisticsCard";
 import Loader from "../../components/common/Loader";
@@ -10,7 +10,12 @@ import "../../styles/dashboard.css";
 const ResultsPage = () => {
   const { user } = useAuth();
 
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalStudents:0,
+    totalExams:0,
+    passedCount:0,
+    failedCount:0,
+  });
   const [results, setResults] = useState([]);
   const [studentFilter, setStudentFilter] = useState("all");
   const [resultFilter, setResultFilter] = useState("all");
@@ -21,26 +26,54 @@ const ResultsPage = () => {
   const [publishingExamId, setPublishingExamId] = useState(null);
   const [actionError, setActionError] = useState("");
 
-  const loadData = async () => {
-    try {
-      const { stats: statsData, results: resultsData } = await getFacultyResultsData(user?.user_id);
-      setStats(statsData);
-      setResults(resultsData);
-    } catch (err) {
-      setLoadError(
-        err.response?.data?.error ||
-        err.response?.data?.detail ||
-        "Could not load results."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadResults = async (examId) => {
+  try {
+    setLoading(true);
+
+    const resultsData = await getExamResults(examId);
+
+    const formatted = resultsData.map((r) => ({
+      id: r.result_id,
+      examId: r.exam_id,
+      student: r.student_name,
+      exam: r.exam_title,
+      date: r.submitted_at
+        ? new Date(r.submitted_at).toLocaleDateString()
+        : "-",
+      score: r.marks,
+      result: r.percentage >= 40 ? "passed" : "failed",
+      timeSpent: "-",
+      isPublished: r.published,
+    }));
+
+    setResults(formatted);
+
+    setStats({
+      totalStudents: formatted.length,
+      totalExams: 1,
+      passedCount: formatted.filter((r) => r.result === "passed").length,
+      failedCount: formatted.filter((r) => r.result === "failed").length,
+    });
+
+  } catch (err) {
+    setLoadError(
+      err.response?.data?.error ||
+      "Could not load results."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const loadData = async () => {
+  await loadResults(2);   // default exam
+};
 
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.user_id]);
+  }, []);
 
   const handlePublishOne = async (resultId) => {
     setActionError("");
@@ -104,9 +137,8 @@ const ResultsPage = () => {
   ];
 
   const students = ["all", ...new Set(results.map((r) => r.student))];
-  const exams = ["all", ...new Set(results.map((r) => JSON.stringify({ id: r.examId, title: r.exam })))]
-    .map((s, i) => (i === 0 ? { id: "all", title: "All Exams" } : JSON.parse(s)));
-
+  const [exams, setExams] = useState([]);
+setExams(facultyExams);
   const filteredResults = results.filter((r) => {
     const matchesStudent = studentFilter === "all" || r.student === studentFilter;
     const matchesResult = resultFilter === "all" || r.result === resultFilter;
@@ -149,14 +181,28 @@ const ResultsPage = () => {
           </h2>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <select
-              style={{ height: 38, borderRadius: 10, border: "1px solid var(--color-border)", padding: "0 10px", fontSize: 13 }}
-              value={examFilter}
-              onChange={(e) => setExamFilter(e.target.value)}
-            >
-              {exams.map((ex) => (
-                <option key={ex.id} value={ex.id}>{ex.title}</option>
-              ))}
-            </select>
+  style={{
+    height: 38,
+    borderRadius: 10,
+    border: "1px solid var(--color-border)",
+    padding: "0 10px",
+    fontSize: 13,
+  }}
+  value={examFilter}
+  onChange={(e) => {
+    const id = Number(e.target.value);
+
+    setExamFilter(id);
+
+    loadResults(id);
+  }}
+>
+  {exams.map((exam) => (
+    <option key={exam.id} value={exam.id}>
+      {exam.title}
+    </option>
+  ))}
+</select>
             <select
               style={{ height: 38, borderRadius: 10, border: "1px solid var(--color-border)", padding: "0 10px", fontSize: 13 }}
               value={studentFilter}
