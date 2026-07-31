@@ -25,8 +25,13 @@ export const getExamDetails = async (examId) => {
 
 //Exam Questions
 export const getExamQuestions = async (examId) => {
-  const { data } = await api.get(`/submissions/start/${examId}/`);
-
+  const { data } = await api.get(`/submissions/start/${examId}/`,
+  {
+      params: {
+        camera_verified: true,
+      },
+    }
+  );
   return {
     questions: data.questions.map((q) => ({
       id: q.id,

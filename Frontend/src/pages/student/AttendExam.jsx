@@ -39,40 +39,49 @@ const AttendExam = () => {
       setLoadError("");
 
       try {
-        const [examDetails, startData] = await Promise.all([
-          getExamDetails(examId),
-          getExamQuestions(examId),
-        ]);
+  // Ask for camera permission first
+  console.log("Requesting camera...");
+  await navigator.mediaDevices.getUserMedia({ video: true });
 
-        if (cancelled) return;
+  // Camera verified, now call backend
+  const [examDetails, startData] = await Promise.all([
+    getExamDetails(examId),
+    getExamQuestions(examId),
+  ]);
 
-        if (!examDetails) {
-          setLoadError("Exam not found.");
-          return;
-        }
+  if (cancelled) return;
 
-        if (!startData?.questions || startData.questions.length === 0) {
-          setLoadError("No questions found.");
-          return;
-        }
+  if (!examDetails) {
+    setLoadError("Exam not found.");
+    return;
+  }
 
-        setExam(examDetails);
-        setQuestions(startData.questions);
-        setRemainingSeconds(startData.duration*60);
+  if (!startData?.questions || startData.questions.length === 0) {
+    setLoadError("No questions found.");
+    return;
+  }
 
-        // Restore any answers already saved on the backend (e.g. the
-        // student left and came back, or refreshed mid-exam).
-      } catch (err) {
-        if (cancelled) return;
-        console.error(err);
-        setLoadError(
-          err.response?.data?.error ||
-            err.response?.data?.detail ||
-            "Unable to load exam."
-        );
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  setExam(examDetails);
+  setQuestions(startData.questions);
+  setRemainingSeconds(startData.duration * 60);
+
+} catch (err) {
+  if (cancelled) return;
+
+  console.error(err);
+
+  if (err.name === "NotAllowedError") {
+    setLoadError("Camera permission is required to start the exam.");
+  } else {
+    setLoadError(
+      err.response?.data?.error ||
+      err.response?.data?.detail ||
+      "Unable to load exam."
+    );
+  }
+} finally {
+  if (!cancelled) setLoading(false);
+}
     };
 
     load();
