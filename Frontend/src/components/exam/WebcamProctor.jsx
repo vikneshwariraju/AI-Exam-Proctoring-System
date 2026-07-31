@@ -49,10 +49,10 @@ const WebcamProctor = ({ examId }) => {
           setWarningCount(res.warning_count || 0);
         }
         }
-
+        console.log("Backend Response:", res);
         if (res.flagged && !alertShown) {
           setAlertShown(true);
-          alert(`Warning limit exceeded due to repeated: ${data.warning_type}. Faculty has been notified.`);
+          alert(`Warning limit exceeded due to repeated: ${res.warning_type}. Faculty has been notified.`);
         }
       } catch (err) {
         console.error(err);
