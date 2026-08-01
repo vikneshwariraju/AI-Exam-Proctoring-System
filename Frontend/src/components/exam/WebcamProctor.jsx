@@ -11,7 +11,7 @@ const WebcamProctor = ({ examId }) => {
   const [cameraError, setCameraError] = useState("");
   const [status, setStatus] = useState("Starting Camera...");
   const [warningCount, setWarningCount] = useState(0);
-  const [alertShown, setAlertShown] = useState(false);
+  const alertShown= useRef(false);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -23,10 +23,11 @@ const WebcamProctor = ({ examId }) => {
 
       try {
         const res = await detectFace(examId, image);
+        setWarningCount(res.warning_count || 0);
 
         if (res.face_count === 1) {
           setStatus("✅ Face Detected");
-          setAlertShown(false);
+          alertShown.cuurent = false;
           lastWarningType.current = null;
         } 
         else if (res.face_count === 0) {
@@ -36,7 +37,6 @@ const WebcamProctor = ({ examId }) => {
             lastWarningType.current !== res.warning_type
           ) {
             lastWarningType.current = res.warning_type;
-            setWarningCount(res.warning_count || 0);
           }
         } 
         else {
@@ -46,12 +46,11 @@ const WebcamProctor = ({ examId }) => {
           lastWarningType.current !== res.warning_type
         ) {
           lastWarningType.current = res.warning_type;
-          setWarningCount(res.warning_count || 0);
         }
         }
         console.log("Backend Response:", res);
-        if (res.flagged && !alertShown) {
-          setAlertShown(true);
+        if (res.flagged && !alertShown.current) {
+          alertShown.current = true;
           alert(`Warning limit exceeded due to repeated: ${res.warning_type}. Faculty has been notified.`);
         }
       } catch (err) {

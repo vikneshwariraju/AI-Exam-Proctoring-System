@@ -50,10 +50,10 @@ const CreateExam = () => {
         reset({
           title: exam.title ?? "",
           subject: exam.subject ?? "",
-          startTime: toDatetimeLocal(exam.startTime ?? exam.start_time),
-          endTime: toDatetimeLocal(exam.deadline ?? exam.end_time),
+          startTime: toDatetimeLocal(exam.startTime || exam.start_time),
+          endTime: toDatetimeLocal(exam.deadline || exam.end_time || exam.endTime),
           duration: exam.duration ?? "",
-          totalMarks: exam.totalMarks ?? "",
+          totalMarks: exam.totalMarks ?? exam.total_marks ?? "",
         });
       })
       .catch((err) => {
