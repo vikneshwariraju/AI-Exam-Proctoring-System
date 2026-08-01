@@ -5,5 +5,5 @@ from .models import Exam
 class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
-        fields = ['id', 'faculty', 'title', 'total_marks', 'duration', 'start_time', 'end_time', 'created_at']
+        fields = ['id', 'faculty', 'title','subject','total_marks', 'duration', 'start_time', 'end_time', 'created_at']
         read_only_fields = ['faculty', 'created_at']

@@ -77,7 +77,7 @@ class UpcomingExamsView(APIView):
             data.append({
                 'id': e.id,
                 'title': e.title,
-                'subject': e.title,
+                'subject': e.subject,
                 'duration': e.duration,
                 'total_marks': e.total_marks,
                 'start_time': e.start_time,
