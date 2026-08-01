@@ -112,7 +112,7 @@ class FacultyExamsView(APIView):
             data.append({
                 'id': e.id,
                 'title': e.title,
-                'subject': e.title,
+                'subject': e.subject,
                 'duration': e.duration,
                 'total_marks': e.total_marks,
                 'question_count': q_count,

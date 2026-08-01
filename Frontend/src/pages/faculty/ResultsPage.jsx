@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, FileText, CheckCircle2, XCircle, Send, CheckCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getExamResults, publishResult, publishAllResults } from "../../services/resultsService";
+import { getFacultyExams } from "../../services/facultyService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import StatisticsCard from "../../components/dashboard/StatisticsCard";
 import Loader from "../../components/common/Loader";
@@ -9,7 +10,7 @@ import "../../styles/dashboard.css";
 
 const ResultsPage = () => {
   const { user } = useAuth();
-
+  const [exams, setExams] = useState([]);
   const [stats, setStats] = useState({
     totalStudents:0,
     totalExams:0,
@@ -67,7 +68,18 @@ const loadResults = async (examId) => {
 
 
 const loadData = async () => {
-  await loadResults(2);   // default exam
+  try {
+    const examList = await getFacultyExams();
+
+    setExams(examList);
+
+    if (examList.length > 0) {
+      setExamFilter(examList[0].id);
+      await loadResults(examList[0].id);
+    }
+  } catch (err) {
+    setLoadError("Could not load exams.");
+  }
 };
 
   useEffect(() => {
@@ -137,8 +149,6 @@ const loadData = async () => {
   ];
 
   const students = ["all", ...new Set(results.map((r) => r.student))];
-  const [exams, setExams] = useState([]);
-setExams(facultyExams);
   const filteredResults = results.filter((r) => {
     const matchesStudent = studentFilter === "all" || r.student === studentFilter;
     const matchesResult = resultFilter === "all" || r.result === resultFilter;
@@ -189,11 +199,9 @@ setExams(facultyExams);
     fontSize: 13,
   }}
   value={examFilter}
-  onChange={(e) => {
+  onChange={async (e) => {
     const id = Number(e.target.value);
-
     setExamFilter(id);
-
     loadResults(id);
   }}
 >

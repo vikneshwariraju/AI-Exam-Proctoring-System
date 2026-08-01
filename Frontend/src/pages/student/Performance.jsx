@@ -1,100 +1,128 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, AlertTriangle } from "lucide-react";
+import {
+  TrendingUp,
+  AlertTriangle,
+  BookOpen,
+  Award,
+  Target,
+  BarChart3,
+} from "lucide-react";
+
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Loader from "../../components/common/Loader";
+
 import { getStudentExams } from "../../services/studentService";
 import { getStudentPerformance } from "../../services/examService";
 
 const DIFFICULTY_COLORS = {
-  easy: "#059669",
-  medium: "#D97706",
+  easy: "#16A34A",
+  medium: "#F59E0B",
   hard: "#DC2626",
 };
 
-/** Simple horizontal bar chart, no external chart library needed. */
 const AccuracyBarChart = ({ data }) => {
   if (!data || data.length === 0) {
     return (
-      <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
-        No difficulty data available for this exam.
+      <p className="text-muted small">
+        No difficulty data available.
       </p>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div>
       {data.map((d) => (
-        <div key={d.difficulty}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", textTransform: "capitalize" }}>
+        <div key={d.difficulty} className="mb-3">
+
+          <div className="d-flex justify-content-between mb-1">
+
+            <span className="fw-semibold text-capitalize">
               {d.difficulty}
             </span>
-            <span style={{ fontSize: 12.5, color: "var(--color-text-secondary)" }}>
-              {d.accuracy !== null ? `${d.accuracy}%` : "\u2014"} ({d.correct}/{d.total})
+
+            <span className="text-muted small">
+              {d.accuracy ?? 0}% ({d.correct}/{d.total})
             </span>
+
           </div>
-          <div style={{ height: 10, background: "var(--color-border)", borderRadius: 10, overflow: "hidden" }}>
+
+          <div
+            className="progress"
+            style={{ height: "10px" }}
+          >
             <div
+              className="progress-bar"
               style={{
                 width: `${d.accuracy ?? 0}%`,
-                height: "100%",
-                background: DIFFICULTY_COLORS[d.difficulty] || "var(--color-primary)",
-                transition: "width 0.4s ease",
+                background:
+                  DIFFICULTY_COLORS[d.difficulty] || "#2563EB",
               }}
             />
           </div>
+
         </div>
       ))}
     </div>
   );
 };
 
-/** Bar chart comparing overall percentage score across every completed exam. */
 const ScoreTrendChart = ({ exams }) => {
-  if (!exams || exams.length === 0) {
+
+  if (!exams.length) {
     return (
-      <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+      <p className="text-muted small">
         No completed exams yet.
       </p>
     );
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 16, height: 160, paddingTop: 10 }}>
-      {exams.map((e) => {
-        const pct = e.percentage ?? 0;
-        return (
-          <div key={e.examId} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 11.5, color: "var(--color-text-secondary)", fontWeight: 600 }}>{pct}%</span>
-            <div
-              style={{
-                width: "100%",
-                maxWidth: 44,
-                height: `${Math.max(pct, 3)}%`,
-                background: pct >= 40 ? "var(--color-primary)" : "var(--color-danger)",
-                borderRadius: "6px 6px 0 0",
-                transition: "height 0.4s ease",
-              }}
-              title={`${e.examTitle}: ${pct}%`}
-            />
-            <span
-              style={{
-                fontSize: 11,
-                color: "var(--color-text-muted)",
-                textAlign: "center",
-                maxWidth: 70,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={e.examTitle}
-            >
-              {e.examTitle}
-            </span>
+
+    <div
+      className="d-flex align-items-end gap-3"
+      style={{ height: 180 }}
+    >
+
+      {exams.map((exam) => (
+
+        <div
+          key={exam.examId}
+          className="flex-fill text-center"
+        >
+
+          <div className="small fw-bold mb-1">
+            {exam.percentage}%
           </div>
-        );
-      })}
+
+          <div
+            className="mx-auto rounded-top"
+            style={{
+              width: 40,
+              height: `${Math.max(exam.percentage, 5)}%`,
+              background:
+                exam.percentage >= 40
+                  ? "#2563EB"
+                  : "#DC2626",
+            }}
+          />
+
+          <small
+            className="text-muted d-block mt-2"
+            style={{
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {exam.examTitle}
+          </small>
+
+        </div>
+
+      ))}
+
     </div>
+
   );
 };
 
@@ -107,7 +135,10 @@ const Performance = () => {
     const load = async () => {
       try {
         const exams = await getStudentExams();
-        const completedExams = exams.filter((e) => e.status === "completed");
+
+        const completedExams = exams.filter(
+          (e) => e.status === "completed"
+        );
 
         const results = await Promise.all(
           completedExams.map((e) =>
@@ -119,8 +150,8 @@ const Performance = () => {
       } catch (err) {
         setLoadError(
           err.response?.data?.error ||
-          err.response?.data?.detail ||
-          "Could not load performance data."
+            err.response?.data?.detail ||
+            "Could not load performance data."
         );
       } finally {
         setLoading(false);
@@ -132,70 +163,324 @@ const Performance = () => {
 
   if (loading) {
     return (
-      <DashboardLayout activeItem="Performance">
-        <Loader label="Loading performance data..." />
+      <DashboardLayout>
+        <Loader />
       </DashboardLayout>
     );
   }
 
   if (loadError) {
     return (
-      <DashboardLayout activeItem="Performance">
-        <div className="card" style={{ padding: 20, color: "#b91c1c" }}>{loadError}</div>
+      <DashboardLayout>
+        <div className="alert alert-danger">
+          {loadError}
+        </div>
       </DashboardLayout>
     );
   }
 
-  return (
-    <DashboardLayout activeItem="Performance">
-      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
-        Performance Analysis
-      </h1>
-      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
-        Your accuracy breakdown, by exam and by question difficulty.
-      </p>
+  // =============================
+  // Summary calculations
+  // =============================
 
-      {performances.length === 0 ? (
-        <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "var(--color-text-muted)", margin: 0 }}>
-            No performance data yet - this shows up once at least one of your exam results has been published.
+  const averageScore =
+    performances.length > 0
+      ? (
+          performances.reduce(
+            (sum, p) => sum + (p.percentage || 0),
+            0
+          ) / performances.length
+        ).toFixed(1)
+      : 0;
+
+  const totalExams = performances.length;
+
+  const avgDifficulty =
+    performances.length > 0
+      ? performances
+          .flatMap((p) => p.difficultyBreakdown)
+          .sort(
+            (a, b) =>
+              (b.accuracy || 0) -
+              (a.accuracy || 0)
+          )[0]?.difficulty || "-"
+      : "-";
+
+  const weakCount = performances.reduce(
+    (sum, p) => sum + p.weakAreas.length,
+    0
+  );
+
+return (
+  <DashboardLayout activeItem="Performance">
+
+    <div className="container-fluid py-4">
+
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+          <h2 className="fw-bold mb-1">
+            Performance Analysis
+          </h2>
+
+          <p className="text-muted mb-0">
+            Track your academic progress and identify your strengths and weak areas.
           </p>
         </div>
-      ) : (
-        <>
-          <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-              <TrendingUp size={16} color="var(--color-primary)" />
-              <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 600, color: "var(--color-text-primary)" }}>
-                Score Trend Across Exams
-              </h3>
-            </div>
-            <ScoreTrendChart exams={performances} />
+
+        <button className="btn btn-primary">
+          <BarChart3 size={18} className="me-2" />
+          Performance Report
+        </button>
+
+      </div>
+
+      {performances.length === 0 ? (
+
+        <div className="card shadow-sm border-0">
+
+          <div className="card-body text-center py-5">
+
+            <BookOpen
+              size={45}
+              className="text-primary mb-3"
+            />
+
+            <h4>No Performance Data</h4>
+
+            <p className="text-muted">
+              Complete an exam to view your performance analysis.
+            </p>
+
           </div>
 
-          {performances.map((p) => (
-            <div key={p.examId} className="card" style={{ padding: 20, marginBottom: 16 }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "var(--color-text-primary)" }}>
-                {p.examTitle}
-              </h3>
-              <p style={{ margin: "0 0 16px", fontSize: 12.5, color: "var(--color-text-secondary)" }}>
-                Overall: {p.marks ?? "\u2014"} marks ({p.percentage ?? 0}%)
-              </p>
+        </div>
 
-              <AccuracyBarChart data={p.difficultyBreakdown} />
+      ) : (
 
-              {p.weakAreas.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, fontSize: 12.5, color: "var(--color-warning)" }}>
-                  <AlertTriangle size={13} />
-                  Weak areas: {p.weakAreas.map((w) => w[0].toUpperCase() + w.slice(1)).join(", ")}
+        <>
+
+          {/* Summary Cards */}
+
+          <div className="row g-4 mb-4">
+
+            <div className="col-md-6 col-lg-3">
+
+              <div className="card shadow-sm border-0 h-100">
+
+                <div className="card-body">
+
+                  <div className="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                      <small className="text-muted">
+                        Average Score
+                      </small>
+
+                      <h2 className="fw-bold mt-2">
+                        {averageScore}%
+                      </h2>
+
+                    </div>
+
+                    <Award
+                      size={38}
+                      color="#2563EB"
+                    />
+
+                  </div>
+
                 </div>
-              )}
-            </div>
-          ))}
-        </>
-      )}
-    </DashboardLayout>
-  );
-};
 
-export default Performance;
+              </div>
+
+            </div>
+
+            <div className="col-md-6 col-lg-3">
+
+              <div className="card shadow-sm border-0 h-100">
+
+                <div className="card-body">
+
+                  <div className="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                      <small className="text-muted">
+                        Exams Completed
+                      </small>
+
+                      <h2 className="fw-bold mt-2">
+                        {totalExams}
+                      </h2>
+
+                    </div>
+
+                    <BookOpen
+                      size={38}
+                      color="#16A34A"
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="col-md-6 col-lg-3">
+
+              <div className="card shadow-sm border-0 h-100">
+
+                <div className="card-body">
+
+                  <div className="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                      <small className="text-muted">
+                        Strongest Difficulty
+                      </small>
+
+                      <h2 className="fw-bold text-capitalize mt-2">
+                        {avgDifficulty}
+                      </h2>
+
+                    </div>
+
+                    <Target
+                      size={38}
+                      color="#F59E0B"
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="col-md-6 col-lg-3">
+
+              <div className="card shadow-sm border-0 h-100">
+
+                <div className="card-body">
+
+                  <div className="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                      <small className="text-muted">
+                        Weak Areas
+                      </small>
+
+                      <h2 className="fw-bold mt-2">
+                        {weakCount}
+                      </h2>
+
+                    </div>
+
+                    <AlertTriangle
+                      size={38}
+                      color="#DC2626"
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Score Trend */}
+
+          <div className="card shadow-sm border-0 mb-4">
+
+            <div className="card-body">
+
+              <h5 className="fw-bold mb-4 d-flex align-items-center">
+
+                <TrendingUp
+                  className="me-2"
+                  size={20}
+                />
+
+                Score Trend
+
+              </h5>
+
+              <ScoreTrendChart exams={performances} />
+
+            </div>
+
+          </div>
+
+          {/* Individual Exam Cards */}
+
+          {performances.map((p) => (
+
+            <div
+              key={p.examId}
+              className="card shadow-sm border-0 mb-4"
+            >
+
+              <div className="card-body">
+
+                <div className="d-flex justify-content-between align-items-center mb-3">
+
+                  <div>
+
+                    <h4 className="fw-bold mb-1">
+                      {p.examTitle}
+                    </h4>
+
+                    <small className="text-muted">
+                      Marks : {p.marks}
+                    </small>
+
+                  </div>
+
+                  <span className="badge bg-primary fs-6 px-3 py-2">
+                    {p.percentage}%
+                  </span>
+
+                </div>
+
+                <AccuracyBarChart
+                  data={p.difficultyBreakdown}
+                />
+
+                {p.weakAreas.length > 0 && (
+
+                  <div className="alert alert-warning mt-4 mb-0">
+
+                    <strong>Weak Areas:</strong>{" "}
+                    {p.weakAreas.join(", ")}
+
+                  </div>
+
+                )}
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </>
+
+      )}
+
+    </div>
+
+  </DashboardLayout>
+);
+};
+export default Performance

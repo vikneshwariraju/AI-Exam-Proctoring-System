@@ -63,7 +63,10 @@ const AttendExam = () => {
 
   setExam(examDetails);
   setQuestions(startData.questions);
-  setRemainingSeconds(startData.duration * 60);
+  console.log("Start Exam API:", startData);
+  setRemainingSeconds(
+    startData.remaining_seconds ?? startData.duration * 60
+);
 
 } catch (err) {
   if (cancelled) return;
@@ -216,7 +219,7 @@ const AttendExam = () => {
         <h5 style={{ margin: 0 }}>{exam.title}</h5>
 
         <Timer
-          durationMinutes={durationMinutes}
+          durationMinutes={remainingSeconds}
           onTimeUp={handleSubmit}
         />
       </div>
