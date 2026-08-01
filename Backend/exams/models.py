@@ -5,6 +5,7 @@ from users.models import User
 class Exam(models.Model):
     faculty = models.ForeignKey(User, on_delete=models.CASCADE, related_name='exams')
     title = models.CharField(max_length=200)
+    subject = models.CharField(max_length=100, default='General') 
     total_marks = models.IntegerField()
     duration = models.IntegerField(help_text="Duration in minutes")
     start_time = models.DateTimeField()
