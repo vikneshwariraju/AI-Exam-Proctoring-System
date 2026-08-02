@@ -1,3 +1,4 @@
+import { HiMenuAlt2 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 
 const formatDateTime = (isoString) => {
@@ -42,28 +43,83 @@ const ExamCard = ({ exam }) => {
 
   const buttonDisabled = !isAvailable && !isCompleted;
 
-  return (
-    <div className="card hover-lift" style={{ padding: 20, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 600, color: "var(--color-text-primary)" }}>{exam.title}</h3>
-          <span className={badge.className}>{badge.text}</span>
+ return (
+  <div
+    className="card hover-lift mb-3"
+    style={{
+      padding: "18px",
+      borderRadius: "16px",
+    }}
+  >
+    <div className="row align-items-center">
+
+      {/* Left Side */}
+      <div className="col-md-8">
+
+        <div className="d-flex align-items-center mb-2">
+
+          <h5
+            className="mb-0 fw-semibold"
+            style={{
+              color: "var(--color-text-primary)",
+              fontSize: "18px",
+            }}
+          >
+            {exam.title}
+          </h5>
+
+          <span
+            className={badge.className}
+            style={{ marginLeft: "12px" }}
+          >
+            {badge.text}
+          </span>
+
         </div>
-        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "6px 0 0", maxWidth: 480 }}>
-          {exam.subject} · {exam.duration} min · {exam.totalMarks} marks
-        </p>
+
+        <div
+          className="text-muted"
+          style={{ fontSize: "13px" }}
+        >
+          <strong>{exam.subject}</strong>
+
+          <span className="mx-2">•</span>
+
+          {exam.duration} mins
+
+          <span className="mx-2">•</span>
+
+          {exam.totalMarks} Marks
+        </div>
+
       </div>
 
-      <button
-        className={isAvailable || isCompleted ? "btn-primary-brand" : "btn-secondary-brand"}
-        disabled={buttonDisabled}
-        style={{ opacity: buttonDisabled ? 0.6 : 1, cursor: buttonDisabled ? "not-allowed" : "pointer", flexShrink: 0 }}
-        onClick={handleClick}
-      >
-        {buttonLabel}
-      </button>
+      {/* Right Side */}
+      <div className="col-md-4 text-md-end mt-3 mt-md-0">
+
+        <button
+          className={
+            isAvailable || isCompleted
+              ? "btn-primary-brand"
+              : "btn-secondary-brand"
+          }
+          disabled={buttonDisabled}
+          onClick={handleClick}
+          style={{
+            minWidth: "130px",
+            padding: "8px 18px",
+            fontSize: "13px",
+            opacity: buttonDisabled ? 0.6 : 1,
+          }}
+        >
+          {buttonLabel}
+        </button>
+
+      </div>
+
     </div>
-  );
+  </div>
+);
 };
 
 export default ExamCard;

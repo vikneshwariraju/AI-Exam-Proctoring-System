@@ -56,27 +56,31 @@ export default function ManageExams() {
   return (
     <DashboardLayout activeItem="Manage Exams">
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 25,
-        }}
-      >
-        <div>
-          <h2>Manage Exams</h2>
-          <p>Manage all your created exams.</p>
-        </div>
+      <div className="row align-items-center mb-4">
 
-        <button
-          className="btn-primary-brand"
-          onClick={() => navigate("/faculty/exams/create")}
-        >
-          <Plus size={16}/>
-          &nbsp;Create Exam
-        </button>
-      </div>
+  <div className="col-md-6">
+    <h2 className="fw-bold  mb-1">
+      Manage Exams
+    </h2>
+
+    <p className="text-muted mb-0">
+      Create, edit and manage your exams.
+    </p>
+  </div>
+
+  <div className="col-md-6 text-md-end mt-3 mt-md-0">
+
+    <button
+      className="btn btn-primary px-4 py-2 shadow-sm"
+      onClick={() => navigate("/faculty/exams/create")}
+    >
+      <Plus size={18} className="me-2" />
+      Create Exam
+    </button>
+
+  </div>
+
+</div>
 
       {loadError && (
         <div className="card" style={{ padding: "12px 16px", marginBottom: 16, background: "#FEF2F2", color: "#B91C1C", fontSize: 13 }}>

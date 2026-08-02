@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { getStudentExams } from "../../services/studentService";
+import { getExamResult } from "../../services/examService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Loader from "../../components/common/Loader";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 
-// No dedicated "list all my results" endpoint exists on the backend —
-// getStudentExams() already fetches every exam and checks each one for
-// a result (GET /api/results/view/<exam_id>/), so we just filter to
-// the completed ones here instead of calling a separate endpoint.
+// getStudentExams() only returns exam metadata (title, duration, status...)
+// — no score/percentage. Those live on GET /results/view/<exam_id>/, so for
+// every completed exam we fetch its result separately and merge it in.
 const Results = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,26 @@ const Results = () => {
       try {
         const exams = await getStudentExams();
         const completed = exams.filter((e) => e.status === "completed");
-        setResults(completed);
+
+        const withResults = await Promise.all(
+          completed.map(async (exam) => {
+            const result = await getExamResult(exam.id).catch(() => null);
+
+            // Backend returns { message: "..." } instead of marks/percentage
+            // when the faculty hasn't published this result yet.
+            const isPublished =
+              result && result.marks !== undefined && result.percentage !== undefined;
+
+            return {
+              ...exam,
+              score: isPublished ? result.marks : undefined,
+              percentage: isPublished ? result.percentage : undefined,
+              isPublished,
+            };
+          })
+        );
+
+        setResults(withResults);
       } catch (err) {
         setLoadError(
           err.response?.data?.error ||
@@ -60,11 +79,19 @@ const Results = () => {
               {results.map((r) => (
                 <tr key={r.id} style={{ borderBottom: "1px solid var(--color-border)" }}>
                   <td style={{ padding: "14px 16px", fontSize: 13.5 }}>{r.title}</td>
-                  <td style={{ padding: "14px 16px", fontSize: 13.5 }}>{r.score ?? "-"}</td>
+                  <td style={{ padding: "14px 16px", fontSize: 13.5 }}>
+                    {r.isPublished ? `${r.score}${r.totalMarks ? `/${r.totalMarks}` : ""}` : (
+                      <span className="badge-warning">Not published</span>
+                    )}
+                  </td>
                   <td style={{ padding: "14px 16px" }}>
-                    <span className={`badge ${(r.percentage ?? 0) >= 40 ? "badge-success" : "badge-danger"}`}>
-                      {r.percentage != null ? `${r.percentage}%` : "-"}
-                    </span>
+                    {r.isPublished ? (
+                      <span className={`badge ${(r.percentage ?? 0) >= 40 ? "badge-success" : "badge-danger"}`}>
+                        {r.percentage}%
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>—</span>
+                    )}
                   </td>
                   <td style={{ padding: "14px 16px" }}>
                     <Eye size={15} style={{ cursor: "pointer", color: "var(--color-primary)" }} onClick={() => navigate(`/student/results/${r.id}`)} />

@@ -1,130 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  TrendingUp,
-  AlertTriangle,
-  BookOpen,
-  Award,
-  Target,
-  BarChart3,
-} from "lucide-react";
+import { TrendingUp, BookOpen, Award, Trophy } from "lucide-react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Loader from "../../components/common/Loader";
 
 import { getStudentExams } from "../../services/studentService";
 import { getStudentPerformance } from "../../services/examService";
-
-const DIFFICULTY_COLORS = {
-  easy: "#16A34A",
-  medium: "#F59E0B",
-  hard: "#DC2626",
-};
-
-const AccuracyBarChart = ({ data }) => {
-  if (!data || data.length === 0) {
-    return (
-      <p className="text-muted small">
-        No difficulty data available.
-      </p>
-    );
-  }
-
-  return (
-    <div>
-      {data.map((d) => (
-        <div key={d.difficulty} className="mb-3">
-
-          <div className="d-flex justify-content-between mb-1">
-
-            <span className="fw-semibold text-capitalize">
-              {d.difficulty}
-            </span>
-
-            <span className="text-muted small">
-              {d.accuracy ?? 0}% ({d.correct}/{d.total})
-            </span>
-
-          </div>
-
-          <div
-            className="progress"
-            style={{ height: "10px" }}
-          >
-            <div
-              className="progress-bar"
-              style={{
-                width: `${d.accuracy ?? 0}%`,
-                background:
-                  DIFFICULTY_COLORS[d.difficulty] || "#2563EB",
-              }}
-            />
-          </div>
-
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const ScoreTrendChart = ({ exams }) => {
-
-  if (!exams.length) {
-    return (
-      <p className="text-muted small">
-        No completed exams yet.
-      </p>
-    );
-  }
-
-  return (
-
-    <div
-      className="d-flex align-items-end gap-3"
-      style={{ height: 180 }}
-    >
-
-      {exams.map((exam) => (
-
-        <div
-          key={exam.examId}
-          className="flex-fill text-center"
-        >
-
-          <div className="small fw-bold mb-1">
-            {exam.percentage}%
-          </div>
-
-          <div
-            className="mx-auto rounded-top"
-            style={{
-              width: 40,
-              height: `${Math.max(exam.percentage, 5)}%`,
-              background:
-                exam.percentage >= 40
-                  ? "#2563EB"
-                  : "#DC2626",
-            }}
-          />
-
-          <small
-            className="text-muted d-block mt-2"
-            style={{
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {exam.examTitle}
-          </small>
-
-        </div>
-
-      ))}
-
-    </div>
-
-  );
-};
 
 const Performance = () => {
   const [performances, setPerformances] = useState([]);
@@ -135,23 +16,18 @@ const Performance = () => {
     const load = async () => {
       try {
         const exams = await getStudentExams();
-
-        const completedExams = exams.filter(
-          (e) => e.status === "completed"
-        );
+        const completedExams = exams.filter((e) => e.status === "completed");
 
         const results = await Promise.all(
-          completedExams.map((e) =>
-            getStudentPerformance(e.id).catch(() => null)
-          )
+          completedExams.map((e) => getStudentPerformance(e.id).catch(() => null))
         );
 
         setPerformances(results.filter(Boolean));
       } catch (err) {
         setLoadError(
           err.response?.data?.error ||
-            err.response?.data?.detail ||
-            "Could not load performance data."
+          err.response?.data?.detail ||
+          "Could not load performance data."
         );
       } finally {
         setLoading(false);
@@ -163,324 +39,147 @@ const Performance = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <Loader />
+      <DashboardLayout activeItem="Performance">
+        <Loader label="Loading performance data..." />
       </DashboardLayout>
     );
   }
 
   if (loadError) {
     return (
-      <DashboardLayout>
-        <div className="alert alert-danger">
-          {loadError}
-        </div>
+      <DashboardLayout activeItem="Performance">
+        <div className="card" style={{ padding: 20, color: "#b91c1c" }}>{loadError}</div>
       </DashboardLayout>
     );
   }
 
-  // =============================
-  // Summary calculations
-  // =============================
-
-  const averageScore =
-    performances.length > 0
-      ? (
-          performances.reduce(
-            (sum, p) => sum + (p.percentage || 0),
-            0
-          ) / performances.length
-        ).toFixed(1)
-      : 0;
-
   const totalExams = performances.length;
 
-  const avgDifficulty =
-    performances.length > 0
-      ? performances
-          .flatMap((p) => p.difficultyBreakdown)
-          .sort(
-            (a, b) =>
-              (b.accuracy || 0) -
-              (a.accuracy || 0)
-          )[0]?.difficulty || "-"
-      : "-";
+  const averageScore =
+    totalExams > 0
+      ? (performances.reduce((sum, p) => sum + (p.percentage || 0), 0) / totalExams).toFixed(1)
+      : 0;
 
-  const weakCount = performances.reduce(
-    (sum, p) => sum + p.weakAreas.length,
-    0
-  );
+  const bestScore =
+    totalExams > 0 ? Math.max(...performances.map((p) => p.percentage || 0)) : 0;
 
-return (
-  <DashboardLayout activeItem="Performance">
-
-    <div className="container-fluid py-4">
-
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-
-        <div>
-          <h2 className="fw-bold mb-1">
-            Performance Analysis
-          </h2>
-
-          <p className="text-muted mb-0">
-            Track your academic progress and identify your strengths and weak areas.
-          </p>
-        </div>
-
-        <button className="btn btn-primary">
-          <BarChart3 size={18} className="me-2" />
-          Performance Report
-        </button>
-
-      </div>
+  return (
+    <DashboardLayout activeItem="Performance">
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
+        Performance Analysis
+      </h1>
+      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
+        Track your progress across every exam you've completed.
+      </p>
 
       {performances.length === 0 ? (
-
-        <div className="card shadow-sm border-0">
-
-          <div className="card-body text-center py-5">
-
-            <BookOpen
-              size={45}
-              className="text-primary mb-3"
-            />
-
-            <h4>No Performance Data</h4>
-
-            <p className="text-muted">
-              Complete an exam to view your performance analysis.
-            </p>
-
-          </div>
-
+        <div className="card" style={{ padding: 48, textAlign: "center" }}>
+          <BookOpen size={36} color="var(--color-primary)" style={{ marginBottom: 12 }} />
+          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 16, margin: "0 0 6px", color: "var(--color-text-primary)" }}>
+            No Performance Data Yet
+          </h3>
+          <p style={{ fontSize: 13.5, color: "var(--color-text-muted)", margin: 0 }}>
+            Complete an exam to see your performance analysis here.
+          </p>
         </div>
-
       ) : (
-
         <>
-
-          {/* Summary Cards */}
-
-          <div className="row g-4 mb-4">
-
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card shadow-sm border-0 h-100">
-
-                <div className="card-body">
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <div>
-
-                      <small className="text-muted">
-                        Average Score
-                      </small>
-
-                      <h2 className="fw-bold mt-2">
-                        {averageScore}%
-                      </h2>
-
-                    </div>
-
-                    <Award
-                      size={38}
-                      color="#2563EB"
-                    />
-
-                  </div>
-
+          {/* Summary row */}
+          <div className="row g-3 mb-4">
+            <div className="col-6 col-md-4">
+              <div className="card" style={{ padding: 18, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Average Score</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)", marginTop: 4 }}>{averageScore}%</div>
                 </div>
-
+                <Award size={30} color="var(--color-primary)" />
               </div>
-
             </div>
 
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card shadow-sm border-0 h-100">
-
-                <div className="card-body">
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <div>
-
-                      <small className="text-muted">
-                        Exams Completed
-                      </small>
-
-                      <h2 className="fw-bold mt-2">
-                        {totalExams}
-                      </h2>
-
-                    </div>
-
-                    <BookOpen
-                      size={38}
-                      color="#16A34A"
-                    />
-
-                  </div>
-
+            <div className="col-6 col-md-4">
+              <div className="card" style={{ padding: 18, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Exams Completed</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)", marginTop: 4 }}>{totalExams}</div>
                 </div>
-
+                <BookOpen size={30} color="var(--color-success)" />
               </div>
-
             </div>
 
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card shadow-sm border-0 h-100">
-
-                <div className="card-body">
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <div>
-
-                      <small className="text-muted">
-                        Strongest Difficulty
-                      </small>
-
-                      <h2 className="fw-bold text-capitalize mt-2">
-                        {avgDifficulty}
-                      </h2>
-
-                    </div>
-
-                    <Target
-                      size={38}
-                      color="#F59E0B"
-                    />
-
-                  </div>
-
+            <div className="col-6 col-md-4">
+              <div className="card" style={{ padding: 18, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Best Score</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)", marginTop: 4 }}>{bestScore}%</div>
                 </div>
-
+                <Trophy size={30} color="var(--color-warning)" />
               </div>
-
             </div>
-
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card shadow-sm border-0 h-100">
-
-                <div className="card-body">
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <div>
-
-                      <small className="text-muted">
-                        Weak Areas
-                      </small>
-
-                      <h2 className="fw-bold mt-2">
-                        {weakCount}
-                      </h2>
-
-                    </div>
-
-                    <AlertTriangle
-                      size={38}
-                      color="#DC2626"
-                    />
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
           </div>
 
-          {/* Score Trend */}
-
-          <div className="card shadow-sm border-0 mb-4">
-
-            <div className="card-body">
-
-              <h5 className="fw-bold mb-4 d-flex align-items-center">
-
-                <TrendingUp
-                  className="me-2"
-                  size={20}
-                />
-
+          {/* Score trend */}
+          <div className="card" style={{ padding: 20, marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <TrendingUp size={16} color="var(--color-primary)" />
+              <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 600, color: "var(--color-text-primary)" }}>
                 Score Trend
-
-              </h5>
-
-              <ScoreTrendChart exams={performances} />
-
+              </h3>
             </div>
 
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 20, height: 160, overflowX: "auto" }}>
+              {performances.map((p) => {
+                const pct = p.percentage ?? 0;
+                return (
+                  <div key={p.examId} style={{ flex: "0 0 60px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-primary)" }}>{pct}%</span>
+                    <div
+                      style={{
+                        width: 36,
+                        height: `${Math.max(pct, 4)}%`,
+                        background: pct >= 40 ? "var(--color-primary)" : "var(--color-danger)",
+                        borderRadius: "6px 6px 2px 2px",
+                      }}
+                    />
+                    <span
+                      style={{ fontSize: 11, color: "var(--color-text-muted)", maxWidth: 60, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      title={p.examTitle}
+                    >
+                      {p.examTitle}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Individual Exam Cards */}
+          {/* Per-exam results */}
+          <div className="card" style={{ padding: 20 }}>
+            <h3 style={{ margin: "0 0 14px", fontSize: 14.5, fontWeight: 600, color: "var(--color-text-primary)" }}>
+              Exam Results
+            </h3>
 
-          {performances.map((p) => (
-
-            <div
-              key={p.examId}
-              className="card shadow-sm border-0 mb-4"
-            >
-
-              <div className="card-body">
-
-                <div className="d-flex justify-content-between align-items-center mb-3">
-
+            {performances.map((p) => {
+              const pct = p.percentage ?? 0;
+              const passed = pct >= 40;
+              return (
+                <div
+                  key={p.examId}
+                  className="row-hover"
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: "1px solid var(--color-border)" }}
+                >
                   <div>
-
-                    <h4 className="fw-bold mb-1">
-                      {p.examTitle}
-                    </h4>
-
-                    <small className="text-muted">
-                      Marks : {p.marks}
-                    </small>
-
+                    <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--color-text-primary)" }}>{p.examTitle}</div>
+                    <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 2 }}>Marks: {p.marks ?? "\u2014"}</div>
                   </div>
-
-                  <span className="badge bg-primary fs-6 px-3 py-2">
-                    {p.percentage}%
-                  </span>
-
+                  <span className={passed ? "badge-success" : "badge-danger"}>{pct}%</span>
                 </div>
-
-                <AccuracyBarChart
-                  data={p.difficultyBreakdown}
-                />
-
-                {p.weakAreas.length > 0 && (
-
-                  <div className="alert alert-warning mt-4 mb-0">
-
-                    <strong>Weak Areas:</strong>{" "}
-                    {p.weakAreas.join(", ")}
-
-                  </div>
-
-                )}
-
-              </div>
-
-            </div>
-
-          ))}
-
+              );
+            })}
+          </div>
         </>
-
       )}
-
-    </div>
-
-  </DashboardLayout>
-);
+    </DashboardLayout>
+  );
 };
-export default Performance
+
+export default Performance;
