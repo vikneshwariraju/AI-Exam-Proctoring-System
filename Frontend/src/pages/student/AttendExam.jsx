@@ -226,7 +226,11 @@ const AttendExam = () => {
 
       <div
         className="container-fluid"
-        style={{ maxWidth: 1100, margin: "30px auto", padding: "0 20px" }}
+        style={{  minHeight: "85vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "40px", }}
       >
         <div className="row g-3">
           <div className="col-12 col-lg-8">

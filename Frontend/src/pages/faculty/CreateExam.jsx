@@ -132,7 +132,9 @@ const CreateExam = () => {
           : "Fill in the exam details, then you'll be taken to add questions."}
       </p>
 
-      <div className="card" style={{ padding: 28, maxWidth: 520 }}>
+      <div className="row justify-content-center">
+  <div className="col-lg-8 col-xl-7">
+    <div className="card shadow-lg border-0 p-5 rounded-4">
 
         {successMsg && (
           <div style={{ background: "#ECFDF5", color: "#059669", padding: 12, borderRadius: 10, fontSize: 13.5, marginBottom: 16 }}>
@@ -180,9 +182,9 @@ const CreateExam = () => {
             />
             {errors.subject && <p style={{ color: "#DC2626", fontSize: 12, marginTop: 4 }}>{errors.subject.message}</p>}
           </div>
-
-          <div className="d-flex gap-3">
-            <div style={{ flex: 1 }}>
+          <div className="row">
+          
+            <div className="col-md-6 mb-3">
               <label style={{ fontSize: 12.5, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 }}>
                 Start Time
               </label>
@@ -194,7 +196,7 @@ const CreateExam = () => {
               {errors.startTime && <p style={{ color: "#DC2626", fontSize: 12, marginTop: 4 }}>{errors.startTime.message}</p>}
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div className="col-md-6 mb-3">
               <label style={{ fontSize: 12.5, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 }}>
                 End Time
               </label>
@@ -211,8 +213,8 @@ const CreateExam = () => {
             </div>
           </div>
 
-          <div className="d-flex gap-3">
-            <div style={{ flex: 1 }}>
+            <div className="row">
+            <div className="col-md-6 mb-3">
               <label style={{ fontSize: 12.5, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 }}>
                 Duration (minutes)
               </label>
@@ -225,7 +227,7 @@ const CreateExam = () => {
               {errors.duration && <p style={{ color: "#DC2626", fontSize: 12, marginTop: 4 }}>{errors.duration.message}</p>}
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div className="col-md-6 mb-3">
               <label style={{ fontSize: 12.5, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 }}>
                 Total Marks
               </label>
@@ -249,7 +251,9 @@ const CreateExam = () => {
           </div>
 
         </form>
-      </div>
+       </div>
+  </div>
+</div>
     </DashboardLayout>
   );
 };

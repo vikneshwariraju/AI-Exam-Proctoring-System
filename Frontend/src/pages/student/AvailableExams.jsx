@@ -7,7 +7,6 @@ import { getStudentExams } from "../../services/studentService";
 const FILTERS = [
   { key: "all", label: "All" },
   { key: "available", label: "Available" },
-  { key: "upcoming", label: "Upcoming" },
   { key: "completed", label: "Completed" },
 ];
 
@@ -62,18 +61,19 @@ const AvailableExams = () => {
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={filter === f.key ? "btn-primary-brand" : "btn-secondary-brand"}
-              style={{ fontSize: 13 }}
-            >
-              {f.label} <span style={{ opacity: 0.75, marginLeft: 4 }}>({countFor(f.key)})</span>
-            </button>
-          ))}
-        </div>
+       <div className="btn-group mb-4" role="group">
+  {FILTERS.map((f) => (
+    <button
+      key={f.key}
+      onClick={() => setFilter(f.key)}
+      className={`btn ${
+        filter === f.key ? "btn-primary" : "btn-outline-secondary"
+      }`}
+    >
+      {f.label} ({countFor(f.key)})
+    </button>
+  ))}
+</div>
 
         {/* Exam list */}
         {loading && (
