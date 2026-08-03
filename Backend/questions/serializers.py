@@ -5,5 +5,5 @@ from .models import Question
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'exam', 'question_text', 'option1', 'option2', 'option3', 'option4', 'answer', 'difficulty', 'created_at']
+        fields = ['id', 'exam', 'question_text', 'option1', 'option2', 'option3', 'option4', 'answer', 'marks', 'difficulty', 'created_at']
         read_only_fields = ['created_at']

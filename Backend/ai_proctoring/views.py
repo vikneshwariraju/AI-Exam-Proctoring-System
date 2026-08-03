@@ -15,6 +15,7 @@ import os
 from django.conf import settings
 from django.db.models import Count
 from users.permissions import IsAdmin
+from results.models import Notification
 
 class LogWarningView(APIView):
     permission_classes = [IsAuthenticated]
@@ -47,6 +48,20 @@ class LogWarningView(APIView):
 
         warning_count = AILog.objects.filter(student=request.user, exam=exam).count()
         flagged = warning_count >= 3
+        if flagged:
+            already_notified = Notification.objects.filter(
+                student=exam.faculty,
+                message__icontains=request.user.name
+            ).filter(
+                message__icontains=exam.title
+            ).exists()
+
+            if not already_notified:
+                Notification.objects.create(
+                    student=exam.faculty,
+                    message=f"{request.user.name} has been flagged for suspicious activity in {exam.title}",
+                    type='warning'
+               )
 
         serializer = AILogSerializer(log)
         return Response({
@@ -174,6 +189,20 @@ class DetectFaceView(APIView):
                 )
                 warning_count = AILog.objects.filter(student=request.user, exam=exam).count()
                 flagged = warning_count >= 3
+            if flagged:
+                already_notified = Notification.objects.filter(
+                    student=exam.faculty,
+                    message__icontains=request.user.name
+                ).filter(
+                message__icontains=exam.title
+                ).exists()
+
+                if not already_notified:
+                    Notification.objects.create(
+                        student=exam.faculty,
+                        message=f"{request.user.name} has been flagged for suspicious activity in {exam.title}",
+                        type='warning'
+                )
 
             return Response({
                 'face_count': face_count,

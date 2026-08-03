@@ -16,6 +16,7 @@ class Question(models.Model):
     option3 = models.CharField(max_length=255)
     option4 = models.CharField(max_length=255)
     answer = models.CharField(max_length=255)
+    marks = models.PositiveIntegerField(default=1)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
     created_at = models.DateTimeField(auto_now_add=True)
 

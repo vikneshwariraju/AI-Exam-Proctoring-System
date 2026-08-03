@@ -10,10 +10,10 @@ from submissions.models import StudentAnswer
 from .models import Result, Notification
 from .serializers import ResultSerializer
 from submissions.models import ExamAttempt
+from django.db import IntegrityError, transaction
 
 
 class CalculateResultView(APIView):
-    """Called automatically after submission - calculates marks but does NOT reveal them to student yet."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request, exam_id):
@@ -22,31 +22,37 @@ class CalculateResultView(APIView):
         except Exam.DoesNotExist:
             return Response({'error': 'Exam not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        existing = Result.objects.filter(student=request.user, exam=exam).first()
-        if existing:
-            return Response({'message': 'Exam submitted successfully'}, status=status.HTTP_200_OK)
-
         answers = StudentAnswer.objects.filter(student=request.user, exam=exam)
         total_questions = Question.objects.filter(exam=exam).count()
 
-        marks_per_question = exam.total_marks / total_questions if total_questions > 0 else 0
         marks = 0
-
         for ans in answers:
             if ans.selected_option.strip().lower() == ans.question.answer.strip().lower():
-                marks += marks_per_question
+                marks += ans.question.marks
 
         percentage = (marks / exam.total_marks) * 100 if exam.total_marks > 0 else 0
 
-        Result.objects.create(
-            student=request.user,
-            exam=exam,
-            marks=round(marks),
-            percentage=round(percentage, 2),
-            published=False
-        )
+        try:
+            with transaction.atomic():
+                result, created = Result.objects.get_or_create(
+                    student=request.user,
+                    exam=exam,
+                    defaults={
+                        'marks': round(marks),
+                        'percentage': round(percentage, 2),
+                        'published': False,
+                    }
+                )
+        except IntegrityError:
+            result = Result.objects.get(student=request.user, exam=exam)
+            created = False
+
         ExamAttempt.objects.filter(student=request.user, exam=exam).update(submitted=True)
-        return Response({'message': 'Exam submitted successfully'}, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {'message': 'Exam submitted successfully'},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
    
 
 class ViewResultView(APIView):
@@ -190,6 +196,35 @@ class StudentNotificationsView(APIView):
             'id': n.id,
             'message': n.message,
             'time': f"{timesince(n.created_at)} ago",
-            'type': n.type
+            'type': n.type,
+            'is_read': n.is_read
         } for n in notifications]
         return Response(data)
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id):
+        try:
+            notification = Notification.objects.get(id=notification_id, student=request.user)
+        except Notification.DoesNotExist:
+            return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_read = True
+        notification.save()
+        return Response({'message': 'Marked as read'}, status=status.HTTP_200_OK)
+
+
+class MarkAllNotificationsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        Notification.objects.filter(student=request.user, is_read=False).update(is_read=True)
+        return Response({'message': 'All notifications marked as read'}, status=status.HTTP_200_OK)
+
+
+class UnreadNotificationCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(student=request.user, is_read=False).count()
+        return Response({'unread_count': count})

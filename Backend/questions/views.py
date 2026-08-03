@@ -6,6 +6,7 @@ from exams.models import Exam
 from .models import Question
 from .serializers import QuestionSerializer
 
+from django.db.models import Sum
 
 class AddQuestionView(APIView):
     permission_classes = [IsFaculty]
@@ -21,12 +22,21 @@ class AddQuestionView(APIView):
         if exam.faculty != request.user:
             return Response({'error': 'You can only add questions to your own exam'}, status=status.HTTP_403_FORBIDDEN)
 
+        new_marks = int(request.data.get('marks', 0))
+        current_total = Question.objects.filter(exam=exam).aggregate(total=Sum('marks'))['total'] or 0
+
+        if current_total + new_marks > exam.total_marks:
+            remaining = exam.total_marks - current_total
+            return Response(
+                {'error': f'Cannot add question. Only {remaining} marks remaining out of {exam.total_marks}.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = QuestionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ListQuestionsView(APIView):
     def get(self, request, exam_id):
