@@ -10,6 +10,7 @@ from .serializers import ExamSerializer
 from results.models import Result
 
 
+
 class CreateExamView(APIView):
     permission_classes = [IsFaculty]
 

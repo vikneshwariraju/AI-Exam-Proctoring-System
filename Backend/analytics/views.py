@@ -2,13 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsFaculty,IsAdmin
 from exams.models import Exam
 from questions.models import Question
 from submissions.models import StudentAnswer
 from results.models import Result
-from django.db.models import Count
-from ai_proctoring.models import AILog
+
 
 class StudentPerformanceView(APIView):
     """Shows a student their own performance breakdown by difficulty for one exam."""
@@ -59,9 +57,11 @@ class StudentPerformanceView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+from rest_framework.permissions import IsAuthenticated
+
 class ExamAnalyticsView(APIView):
-    """Shows faculty class-wide performance for their exam."""
-    permission_classes = [IsFaculty]
+    """Faculty sees analytics for their own exam. Admin can view any exam."""
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, exam_id):
         try:
@@ -69,7 +69,8 @@ class ExamAnalyticsView(APIView):
         except Exam.DoesNotExist:
             return Response({'error': 'Exam not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if exam.faculty != request.user:
+        is_admin = getattr(request.user, 'role', None) == 'admin'
+        if not is_admin and exam.faculty != request.user:
             return Response({'error': 'You can only view analytics for your own exam'}, status=status.HTTP_403_FORBIDDEN)
 
         results = Result.objects.filter(exam=exam)
@@ -108,32 +109,3 @@ class ExamAnalyticsView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class AdminAlertsView(APIView):
-    permission_classes = [IsAdmin]
-
-    def get(self, request):
-        from users.permissions import IsAdmin  # ensure imported
-
-        logs = AILog.objects.select_related('student', 'exam').all()
-
-        grouped = {}
-        for log in logs:
-            key = (log.student.id, log.exam.id)
-            if key not in grouped:
-                grouped[key] = {
-                    'student_id': log.student.id,
-                    'student_name': log.student.name,
-                    'exam_id': log.exam.id,
-                    'exam_title': log.exam.title,
-                    'warning_count': 0,
-                    'warnings': []
-                }
-            grouped[key]['warning_count'] += 1
-            grouped[key]['warnings'].append({
-                'type': log.warning_type,
-                'timestamp': log.timestamp
-            })
-
-        result = [v for v in grouped.values() if v['warning_count'] >= 3]
-
-        return Response(result, status=status.HTTP_200_OK)
