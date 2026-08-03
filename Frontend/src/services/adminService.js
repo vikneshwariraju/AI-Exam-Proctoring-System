@@ -96,3 +96,24 @@ export const getAllExams = async () => {
         return [];
     }
 };
+
+
+export const getFlaggedAlerts = async () => {
+    try {
+        const { data } = await api.get("/admin/alerts/"); // match your urls.py path
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
+};
+
+
+// adminService.js
+export const getExamAnalytics = async (examId) => {
+    try {
+        const { data } = await api.get(`/analytics/exam-analytics/${examId}/`);
+        return data;
+    } catch {
+        return null;
+    }
+};

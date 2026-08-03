@@ -11,14 +11,19 @@ const WebcamProctor = ({ examId }) => {
   const [cameraError, setCameraError] = useState("");
   const [status, setStatus] = useState("Starting Camera...");
   const [warningCount, setWarningCount] = useState(0);
-  const alertShown= useRef(false);
+
+  // Persist "already alerted" per exam attempt in sessionStorage so a
+  // refresh/remount mid-exam doesn't re-trigger the popup — the backend's
+  // `flagged` flag stays true forever once crossed, so without this the
+  // alert would fire again on every remount.
+  const alertKey = `flagged-alert-shown-${examId}`;
+  const alertShown = useRef(sessionStorage.getItem(alertKey) === "true");
 
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!webcamRef.current) return;
 
       const image = webcamRef.current.getScreenshot();
-
       if (!image) return;
 
       try {
@@ -27,31 +32,27 @@ const WebcamProctor = ({ examId }) => {
 
         if (res.face_count === 1) {
           setStatus("✅ Face Detected");
-          alertShown.cuurent = false;
-          lastWarningType.current = null;
-        } 
-        else if (res.face_count === 0) {
+        } else if (res.face_count === 0) {
           setStatus("❌ Face Missing");
-          if (
-            res.warning_type &&
-            lastWarningType.current !== res.warning_type
-          ) {
+          if (res.warning_type) {
             lastWarningType.current = res.warning_type;
           }
-        } 
-        else {
+        } else {
           setStatus("⚠ Multiple Faces");
-        if (
-          res.warning_type &&
-          lastWarningType.current !== res.warning_type
-        ) {
-          lastWarningType.current = res.warning_type;
+          if (res.warning_type) {
+            lastWarningType.current = res.warning_type;
+          }
         }
-        }
-        console.log("Backend Response:", res);
+
+        // Only ever alert once per exam attempt. Use the last known real
+        // warning type, not res.warning_type — that field is null on any
+        // call where the face happens to be fine right now, even though
+        // `flagged` itself stays true from earlier violations.
         if (res.flagged && !alertShown.current) {
           alertShown.current = true;
-          alert(`Warning limit exceeded due to repeated: ${res.warning_type}. Faculty has been notified.`);
+          sessionStorage.setItem(alertKey, "true");
+          const reason = (lastWarningType.current || "repeated suspicious activity").replace(/_/g, " ");
+          alert(`Warning limit exceeded due to: ${reason}. Faculty has been notified.`);
         }
       } catch (err) {
         console.error(err);
@@ -63,28 +64,14 @@ const WebcamProctor = ({ examId }) => {
 
   return (
     <div className="card p-3">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          marginBottom: 10,
-        }}
-      >
-        {cameraError ? (
-          <VideoOff color="red" />
-        ) : (
-          <Video color="green" />
-        )}
-
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        {cameraError ? <VideoOff color="red" /> : <Video color="green" />}
         <h5 style={{ margin: 0 }}>AI Proctoring</h5>
       </div>
 
       {cameraError ? (
         <div className="alert alert-danger">
-          <AlertTriangle size={16} />
-          {" "}
-          {cameraError}
+          <AlertTriangle size={16} /> {cameraError}
         </div>
       ) : (
         <>
@@ -92,41 +79,16 @@ const WebcamProctor = ({ examId }) => {
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            videoConstraints={{
-              width: 320,
-              height: 240,
-              facingMode: "user",
-            }}
-            onUserMediaError={() =>
-              setCameraError(
-                "Camera permission denied."
-              )
-            }
-            style={{
-              width: "100%",
-              borderRadius: 10,
-            }}
+            videoConstraints={{ width: 320, height: 240, facingMode: "user" }}
+            onUserMediaError={() => setCameraError("Camera permission denied.")}
+            style={{ width: "100%", borderRadius: 10 }}
           />
 
-          <div
-            style={{
-              marginTop: 10,
-              padding: 10,
-              borderRadius: 8,
-              background: "#f5f5f5",
-              textAlign: "center",
-              fontWeight: "bold",
-            }}
-          >
+          <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: "#f5f5f5", textAlign: "center", fontWeight: "bold" }}>
             {status}
           </div>
 
-          <p
-            style={{
-              textAlign: "center",
-              marginTop: 10,
-            }}
-          >
+          <p style={{ textAlign: "center", marginTop: 10 }}>
             Warnings : {warningCount}
           </p>
         </>

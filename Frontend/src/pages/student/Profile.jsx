@@ -14,59 +14,75 @@ const Profile = () => {
 
   return (
     <DashboardLayout activeItem="Profile">
-      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 20 }}>My Profile</h1>
-
-      <div className="card overflow-hidden" style={{ maxWidth: 520 }}>
-
-        {/* Gradient banner, same palette as the login/register pages */}
-        <div
-          style={{
-            height: 90,
-            background: "linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED)"
-          }}
-        />
-
-        <div className="px-4 pb-4" style={{ marginTop: -40 }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div className="card" style={{ width: "100%", maxWidth: 400, padding: "36px 32px" }}>
 
           {/* Avatar */}
-          <div
-            className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold border border-4 border-white"
-            style={{
-              width: 80,
-              height: 80,
-              fontSize: 26,
-              background: "linear-gradient(135deg, #2563EB, #4F46E5)",
-              boxShadow: "0 8px 20px rgba(37, 99, 235, 0.3)"
-            }}
-          >
-            {initials}
+          <div className="d-flex justify-content-center">
+            <div
+              className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
+              style={{
+                width: 96,
+                height: 96,
+                fontSize: 30,
+                background: "var(--color-primary)",
+                boxShadow: "0 6px 18px rgba(59, 130, 246, 0.25)",
+              }}
+            >
+              {initials}
+            </div>
           </div>
 
-          <h2 className="mt-3 mb-0" style={{ fontFamily: "var(--font-heading)", fontSize: 19, color: "var(--color-text-primary)" }}>
-            {user?.name || "Student"}
+          {/* Name + role */}
+          <h2
+            className="text-center mt-3 mb-2"
+            style={{ fontFamily: "var(--font-heading)", fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)" }}
+          >
+            {user?.name || "User"}
           </h2>
 
-          <span
-            className="badge text-capitalize mt-2"
-            style={{ background: "#EFF6FF", color: "var(--color-primary)", fontSize: 12, padding: "5px 12px", borderRadius: 20 }}
-          >
-            {user?.role || "student"}
-          </span>
+          <div className="d-flex justify-content-center mb-4">
+            <span
+              className="text-capitalize"
+              style={{
+                background: "#F1F5F9",
+                color: "var(--color-text-secondary)",
+                fontSize: 12.5,
+                fontWeight: 600,
+                padding: "5px 16px",
+                borderRadius: 20,
+              }}
+            >
+              {user?.role || "user"}
+            </span>
+          </div>
 
-          <hr className="my-4" style={{ borderColor: "var(--color-border)" }} />
-
+          {/* Info rows */}
           <div className="d-flex flex-column gap-3">
 
             <div className="d-flex align-items-center gap-3">
               <div
-                className="d-flex align-items-center justify-content-center rounded-3"
-                style={{ width: 36, height: 36, background: "#EFF6FF", color: "var(--color-primary)" }}
+                className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                style={{ width: 42, height: 42, background: "#F1F5F9", color: "var(--color-text-secondary)" }}
               >
-                <Mail size={16} />
+                <Mail size={18} />
               </div>
-              <div>
-                <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Email</div>
-                <div style={{ fontSize: 13.5, color: "var(--color-text-primary)", fontWeight: 500 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                  Email Address
+                </div>
+                <div
+                  style={{
+                    fontSize: 14.5,
+                    color: "var(--color-text-primary)",
+                    fontWeight: 600,
+                    marginTop: 2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={user?.email || "Not available"}
+                >
                   {user?.email || "Not available"}
                 </div>
               </div>
@@ -74,14 +90,16 @@ const Profile = () => {
 
             <div className="d-flex align-items-center gap-3">
               <div
-                className="d-flex align-items-center justify-content-center rounded-3"
-                style={{ width: 36, height: 36, background: "#F3E8FF", color: "var(--color-accent)" }}
+                className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                style={{ width: 42, height: 42, background: "#F1F5F9", color: "var(--color-text-secondary)" }}
               >
-                <IdCard size={16} />
+                <IdCard size={18} />
               </div>
               <div>
-                <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>User ID</div>
-                <div style={{ fontSize: 13.5, color: "var(--color-text-primary)", fontWeight: 500 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                  {user?.role === "faculty" ? "Faculty ID" : user?.role === "admin" ? "Admin ID" : "Student ID"}
+                </div>
+                <div style={{ fontSize: 14.5, color: "var(--color-text-primary)", fontWeight: 600, marginTop: 2 }}>
                   {user?.user_id ?? "—"}
                 </div>
               </div>
@@ -89,15 +107,17 @@ const Profile = () => {
 
             <div className="d-flex align-items-center gap-3">
               <div
-                className="d-flex align-items-center justify-content-center rounded-3"
-                style={{ width: 36, height: 36, background: "#ECFDF5", color: "var(--color-success)" }}
+                className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                style={{ width: 42, height: 42, background: "#F1F5F9", color: "var(--color-text-secondary)" }}
               >
-                <ShieldCheck size={16} />
+                <ShieldCheck size={18} />
               </div>
               <div>
-                <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Account Type</div>
-                <div style={{ fontSize: 13.5, color: "var(--color-text-primary)", fontWeight: 500, textTransform: "capitalize" }}>
-                  {user?.role || "student"}
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                  Account Access
+                </div>
+                <div style={{ fontSize: 14.5, color: "var(--color-text-primary)", fontWeight: 600, marginTop: 2, textTransform: "capitalize" }}>
+                  {user?.role || "user"}
                 </div>
               </div>
             </div>
@@ -105,7 +125,18 @@ const Profile = () => {
           </div>
 
           <button
-            className="btn-secondary-brand w-100 mt-4"
+            className="w-100 mt-4"
+            style={{
+              height: 46,
+              border: "none",
+              borderRadius: 10,
+              background: "var(--color-primary)",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "0.2s",
+            }}
             onClick={() => alert("Edit profile — coming soon")}
           >
             Edit Profile

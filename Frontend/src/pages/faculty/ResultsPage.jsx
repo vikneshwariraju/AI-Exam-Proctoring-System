@@ -43,7 +43,6 @@ const loadResults = async (examId) => {
         : "-",
       score: r.marks,
       result: r.percentage >= 40 ? "passed" : "failed",
-      timeSpent: "-",
       isPublished: r.published,
     }));
 
@@ -266,7 +265,6 @@ const loadData = async () => {
                     </span>
                   </td>
                   <td style={{ padding: "12px 14px", fontSize: 13.5 }}>{r.score}</td>
-                  <td style={{ padding: "12px 14px", fontSize: 13.5 }}>{r.timeSpent}</td>
                   <td style={{ padding: "12px 14px" }}>
                     <span className={r.isPublished ? "badge-success" : "badge-warning"}>
                       {r.isPublished ? "Published" : "Unpublished"}

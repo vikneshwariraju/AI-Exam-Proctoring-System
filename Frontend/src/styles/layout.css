@@ -4,15 +4,17 @@
    in DashboardLayout.jsx, so this file is intentionally tiny. */
 
 .bg-brand {
-    background-color: #2563EB !important;
+    background-color: #3B82F6 !important;
 }
 
+/* Single light-blue tone instead of the blue→indigo→purple gradient —
+   flatter and more professional for a sidebar */
 .bg-brand-gradient {
-    background: linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED) !important;
+    background: linear-gradient(160deg, #3B82F6, #2563EB) !important;
 }
 
 .text-brand {
-    color: #2563EB !important;
+    color: #3B82F6 !important;
 }
 
 .nav-link-brand {
@@ -20,10 +22,11 @@
     background: transparent;
     border: none;
     text-align: left;
+    border-radius: 8px;
 }
 
 .nav-link-brand:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .nav-link-brand.active {

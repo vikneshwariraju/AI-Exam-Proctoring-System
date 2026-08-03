@@ -1,16 +1,25 @@
 const WelcomeCard = ({ name }) => (
   <div
-    className="rounded-4 text-white mb-4"
+    className="mb-4"
     style={{
-      padding: "26px 28px",
-      background: "linear-gradient(135deg, #2563EB, #4F46E5, #7C3AED)",
-      boxShadow: "0 15px 35px rgba(37, 99, 235, 0.25)"
+      padding: "24px 28px",
+      borderRadius: 12,
+      background: "var(--color-primary-light)",
+      border: "1px solid #DBEAFE",
     }}
   >
-    <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 22, fontWeight: 600, margin: "0 0 4px" }}>
-      Welcome back, {name || "Student"} 
+    <h1
+      style={{
+        fontFamily: "var(--font-heading)",
+        fontSize: 21,
+        fontWeight: 600,
+        margin: "0 0 4px",
+        color: "var(--color-text-primary)",
+      }}
+    >
+      Welcome back, {name || "Student"}
     </h1>
-    <p style={{ margin: 0, fontSize: 13.5, opacity: 0.9 }}>
+    <p style={{ margin: 0, fontSize: 13.5, color: "var(--color-text-secondary)" }}>
       Here's what's happening with your exams today.
     </p>
   </div>

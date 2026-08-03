@@ -1,20 +1,17 @@
-/* Matches the palette + type scale already established in auth.css,
-   exposed as CSS variables so every dashboard component (WelcomeCard,
-   StatisticsCard, UpcomingExamCard, etc.) that already references
-   var(--color-primary) / var(--font-heading) picks this up automatically. */
-
 :root {
     --font-heading: "Poppins", sans-serif;
     --font-body: "Inter", sans-serif;
 
-    --color-primary: #2563EB;
-    --color-primary-dark: #4F46E5;
-    --color-accent: #7C3AED;
+    /* Lighter, single-tone blue — dropped the indigo/purple mix */
+    --color-primary: #3B82F6;
+    --color-primary-dark: #2563EB;
+    --color-accent: #60A5FA;
 
     --color-bg: #F9FAFB;
     --color-border: #E5E7EB;
 
-    --color-text-primary: #07205A;
+    /* Softened from near-black navy to a professional slate */
+    --color-text-primary: #1E293B;
     --color-text-secondary: #64748B;
     --color-text-muted: #94A3B8;
 
@@ -26,19 +23,19 @@
     --color-danger-bg: #FEF2F2;
 
     --radius-sm: 8px;
-    --radius-md: 14px;
+    --radius-md: 12px;
 }
 
 body {
     font-family: var(--font-body);
 }
 
-/* Same card look as .auth-card, reused everywhere in the dashboard */
+/* Card — slightly tighter radius, softer shadow */
 .card {
     background: #fff;
     border: 1px solid var(--color-border);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
 }
 
 .badge-success {
@@ -46,7 +43,7 @@ body {
     color: var(--color-success);
     font-weight: 600;
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: 8px;
     font-size: 12px;
 }
 
@@ -55,7 +52,7 @@ body {
     color: var(--color-warning);
     font-weight: 600;
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: 8px;
     font-size: 12px;
 }
 
@@ -64,50 +61,70 @@ body {
     color: var(--color-danger);
     font-weight: 600;
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: 8px;
     font-size: 12px;
 }
 
+/* Primary button — single light blue, no gradient, subtle hover */
 .btn-primary-brand {
-    background: linear-gradient(90deg, #2563EB, #4F46E5);
+    background: var(--color-primary);
     color: #fff;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     padding: 9px 18px;
     font-size: 13.5px;
-    transition: 0.25s;
+    transition: 0.2s;
 }
 
 .btn-primary-brand:hover {
+    background: var(--color-primary-dark);
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28);
 }
 
 .btn-secondary-brand {
-    background: #F1F5F9;
-    color: var(--color-text-secondary);
-    border: none;
-    border-radius: 10px;
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    border: 1px solid #DBEAFE;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     padding: 9px 18px;
     font-size: 13.5px;
+    transition: 0.2s;
+}
+
+.btn-secondary-brand:hover {
+    background: #DBEAFE;
+}
+
+.btn-danger {
+    background: #FEF2F2;
+    color: var(--color-danger);
+    border: 1px solid #FECACA;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    padding: 9px 14px;
+    font-size: 13.5px;
+    transition: 0.2s;
+}
+
+.btn-danger:hover {
+    background: #FEE2E2;
 }
 
 .hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
 .icon-circle {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -116,7 +133,7 @@ body {
 
 .row-hover {
     transition: background 0.15s ease;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .row-hover:hover {

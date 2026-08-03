@@ -175,6 +175,7 @@ const AttendExam = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; 
     setSubmitting(true);
 
     try {
@@ -218,10 +219,10 @@ const AttendExam = () => {
       >
         <h5 style={{ margin: 0 }}>{exam.title}</h5>
 
-        <Timer
-          durationMinutes={remainingSeconds}
-          onTimeUp={handleSubmit}
-        />
+       <Timer
+  initialSeconds={remainingSeconds}
+  onTimeUp={handleSubmit}
+/>
       </div>
 
       <div
@@ -258,7 +259,7 @@ const AttendExam = () => {
               </Button>
 
               {currentIndex === questions.length - 1 ? (
-                <Button onClick={() => setShowSubmitModal(true)}>
+                <Button onClick={() => setShowSubmitModal(true)} disabled={submitting}>
                   Submit
                 </Button>
               ) : (

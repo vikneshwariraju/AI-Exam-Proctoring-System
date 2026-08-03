@@ -307,15 +307,8 @@ export default function StudentLogin() {
 
                             {/* OPTIONS */}
 
-                            <div className="auth-options">
+                            <div className="auth-options" style={{ justifyContent: "flex-end" }}>
 
-                                <label>
-
-                                    <input type="checkbox" />
-
-                                    {" "}Remember me
-
-                                </label>
 
                                 <Link to="/forgot-password">
     Forgot Password?

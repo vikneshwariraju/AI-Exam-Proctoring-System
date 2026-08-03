@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, HelpCircle, CalendarClock, Plus, Eye, Search } from "lucide-react";
+import { FileText, ListChecks, CalendarClock, Plus, Eye, Search,HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getFacultyStats, getFacultyExams } from "../../services/facultyService";
@@ -56,11 +56,26 @@ const FacultyDashboard = () => {
     );
   }
 
-  const statCards = [
-    { label: "Total Exams", value: stats.totalExams, icon: <FileText size={17} /> },
-    { label: "Total Questions", value: stats.totalQuestions, icon: <HelpCircle size={17} /> },
-    { label: "Upcoming Exams", value: stats.upcomingExams, icon: <CalendarClock size={17} /> },
-  ];
+const statCards = [
+  {
+    label: "Total Exams",
+    value: stats.totalExams,
+    icon: <FileText size={22} color="#2563EB" />,
+    bg: "#EFF6FF",
+  },
+  {
+    label: "Total Questions",
+    value: stats.totalQuestions,
+    icon: <ListChecks size={22} color="#7C3AED" />,
+    bg: "#F5F3FF",
+  },
+  {
+    label: "Upcoming Exams",
+    value: stats.upcomingExams,
+    icon: <CalendarClock size={22} color="#059669" />,
+    bg: "#ECFDF5",
+  },
+];
 
   const filteredExams = exams.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||
