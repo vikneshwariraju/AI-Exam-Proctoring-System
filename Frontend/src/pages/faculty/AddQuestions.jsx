@@ -14,6 +14,8 @@ const AddQuestions = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const usedMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+// pass exam.total_marks down as a prop, or fetch exam details separately
   const [rawError, setRawError] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
@@ -113,10 +115,10 @@ const AddQuestions = () => {
   return (
     <DashboardLayout activeItem="Manage Exams">
       <button
-        onClick={() => navigate("/faculty/dashboard")}
+        onClick={() => navigate("/faculty/exams")}
         style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--color-text-secondary)", fontSize: 13, cursor: "pointer", marginBottom: 18 }}
       >
-        <ArrowLeft size={15} /> Back to dashboard
+        <ArrowLeft size={15} /> Back to Manage Exams
       </button>
 
       <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>

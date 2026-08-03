@@ -117,51 +117,27 @@ const AdminDashboard = () => {
     <DashboardLayout activeItem="Dashboard">
 
       <div className="row g-3 mb-4">
-        <div className="col-6 col-md-3">
-          <StatisticsCard
-            label="Students"
-            value={stats.totalStudents ?? "—"}
-            icon={<Users size={18} />}
-          />
-        </div>
-
-        <div className="col-6 col-md-3">
-          <StatisticsCard
-            label="Faculty"
-            value={stats.totalFaculty ?? "—"}
-            icon={<UserCheck size={18} />}
-          />
-        </div>
-
-        <div className="col-6 col-md-3">
+        <div className="col-6 col-md-4">
           <StatisticsCard
             label="Active Exams"
             value={stats.activeExams}
-            icon={<BookOpen size={18} />}
+            icon={<BookOpen size={30} color="var(--color-accent)" />}
           />
         </div>
 
-        <div className="col-6 col-md-3">
+        <div className="col-6 col-md-4">
           <StatisticsCard
             label="AI Alerts"
             value={stats.flaggedAlerts ?? "—"}
-            icon={<AlertTriangle size={18} />}
+            icon={<AlertTriangle size={30} color="var(--color-danger)" />}
           />
         </div>
 
-        <div className="col-6 col-md-3">
-          <StatisticsCard
-            label="Total Admins"
-            value={userStats?.totalAdmins ?? "—"}
-            icon={<Shield size={18} />}
-          />
-        </div>
-
-        <div className="col-6 col-md-3">
+        <div className="col-6 col-md-4">
           <StatisticsCard
             label="Total Users"
             value={userStats?.totalUsers ?? "—"}
-            icon={<Layers size={18} />}
+            icon={<Layers size={30} color="var(--color-warning)" />}
           />
         </div>
       </div>

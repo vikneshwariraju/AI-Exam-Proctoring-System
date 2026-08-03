@@ -4,7 +4,7 @@ import {
   Bell, Menu, X, UserCircle, Settings, KeyRound, LogOut
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { getNotifications } from "../../services/studentService";
+import { getNotifications, markNotificationRead } from "../../services/studentService";
 import "../../styles/layout.css";
 import logo from "../../assets/logo.png";
 
@@ -46,6 +46,9 @@ const DashboardLayout = ({ children, activeItem }) => {
   const navItems = NAV_ITEMS[role] || NAV_ITEMS.student;
   const initials = (user?.name || "U").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
+  // Unread count drives the red dot — recalculated on every render from live state
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   useEffect(() => {
     getNotifications().then(setNotifications).catch(() => setNotifications([]));
   }, []);
@@ -71,6 +74,25 @@ const DashboardLayout = ({ children, activeItem }) => {
   const goTo = (path) => {
     navigate(path);
     setMobileOpen(false);
+  };
+
+  // Marks a single notification read — optimistic UI update + backend sync
+  const handleNotifClick = async (n) => {
+    if (n.is_read) return;
+
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
+    );
+
+    try {
+      await markNotificationRead(n.id);
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+      // roll back on failure so the dot/UI stays accurate
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, is_read: false } : item))
+      );
+    }
   };
 
   return (
@@ -125,7 +147,7 @@ const DashboardLayout = ({ children, activeItem }) => {
                 onClick={() => setNotifOpen((o) => !o)}
               >
                 <Bell size={18} />
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                   <span
                     className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
                   />
@@ -148,7 +170,17 @@ const DashboardLayout = ({ children, activeItem }) => {
                   )}
 
                   {notifications.map((n) => (
-                    <div key={n.id} className="px-3 py-2 border-bottom" style={{ fontSize: 13 }}>
+                    <div
+                      key={n.id}
+                      className="px-3 py-2 border-bottom"
+                      style={{
+                        fontSize: 13,
+                        cursor: "pointer",
+                        background: n.is_read ? "transparent" : "#F0F7FF",
+                        fontWeight: n.is_read ? 400 : 600,
+                      }}
+                      onClick={() => handleNotifClick(n)}
+                    >
                       <div>{n.message}</div>
                       <div className="text-secondary" style={{ fontSize: 11.5, marginTop: 2 }}>{n.time}</div>
                     </div>

@@ -15,31 +15,62 @@ const Students = () => {
 
   return (
     <DashboardLayout activeItem="Students">
-      <h2>Students</h2>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
+        Students
+      </h1>
+      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
+        All student accounts registered on the platform.
+      </p>
 
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Joined</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {students.map((s) => (
-              <tr key={s.id}>
-                <td>{s.name}</td>
-                <td>{s.email}</td>
-                <td>{new Date(s.created_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="card" style={{ padding: 20 }}>
+        {loading ? (
+          <Loader label="Loading students..." />
+        ) : students.length === 0 ? (
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", padding: "20px 0", textAlign: "center" }}>
+            No student accounts found.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
+                  {["Name", "Email", "Joined"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: "left",
+                        padding: "10px 14px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--color-text-secondary)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((s) => (
+                  <tr key={s.id} className="row-hover" style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, fontWeight: 500, color: "var(--color-text-primary)" }}>
+                      {s.name}
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, color: "var(--color-text-secondary)" }}>
+                      {s.email}
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, color: "var(--color-text-secondary)" }}>
+                      {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 };

@@ -15,33 +15,65 @@ const Exams = () => {
 
   return (
     <DashboardLayout activeItem="Exams">
-      <h2>Exams</h2>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
+        Exams
+      </h1>
+      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
+        All exams created across every faculty member.
+      </p>
 
-      {loading ? (
-        <Loader />
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Faculty</th>
-              <th>Marks</th>
-              <th>Start</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {exams.map((e) => (
-              <tr key={e.id}>
-                <td>{e.title}</td>
-                <td>{e.facultyName}</td>
-                <td>{e.totalMarks}</td>
-                <td>{new Date(e.startTime).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="card" style={{ padding: 20 }}>
+        {loading ? (
+          <Loader label="Loading exams..." />
+        ) : exams.length === 0 ? (
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", padding: "20px 0", textAlign: "center" }}>
+            No exams found.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
+                  {["Title", "Faculty", "Marks", "Start"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: "left",
+                        padding: "10px 14px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--color-text-secondary)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {exams.map((e) => (
+                  <tr key={e.id} className="row-hover" style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, fontWeight: 500, color: "var(--color-text-primary)" }}>
+                      {e.title}
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, color: "var(--color-text-secondary)" }}>
+                      {e.facultyName}
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, color: "var(--color-text-secondary)" }}>
+                      {e.totalMarks}
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: 13.5, color: "var(--color-text-secondary)" }}>
+                      {e.startTime ? new Date(e.startTime).toLocaleString() : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 };

@@ -36,3 +36,13 @@ export const getRecentResults = async () => {
     const { data } = await api.get("/student/recent-results/");
     return data;
 };
+
+export const markNotificationRead = async (id) => {
+    const { data } = await api.post(`/results/notifications/mark-read/${id}/`);
+    return data;
+};
+
+export const markAllNotificationsRead = async () => {
+    const { data } = await api.post(`/results/notifications/mark-all-read/`);
+    return data;
+};

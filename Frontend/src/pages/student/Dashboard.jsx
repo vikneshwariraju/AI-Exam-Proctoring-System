@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, CheckCircle2, TrendingUp } from "lucide-react";
+import { FileText, ListChecks, CalendarClock, Plus, Eye, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getStudentStats, getStudentExams } from "../../services/studentService";
@@ -61,11 +61,24 @@ const StudentDashboardPage = () => {
 
   const upcoming = exams.filter((e) => e.status !== "completed");
 
-  const statCards = [
-    { label: "Total Exams", value: stats.totalExams, icon: <FileText size={17} /> },
-    { label: "Completed", value: stats.completedExams, icon: <CheckCircle2 size={17} /> },
-    { label: "Average Score", value: `${stats.averageScore}%`, icon: <TrendingUp size={17} /> },
-  ];
+ 
+const statCards = [
+  {
+    label: "Total Exams",
+    value: stats.totalExams,
+    icon: <FileText size={30} color="var(--color-primary)" />,
+  },
+  {
+    label: "Completed",
+    value: stats.completedExams,
+    icon: <ListChecks size={30} color="var(--color-success)" />,
+  },
+  {
+    label: "Average Score",
+    value: `${stats.averageScore}%`,
+    icon: <CalendarClock size={30} color="var(--color-warning)" />,
+  },
+];
 
   return (
     <DashboardLayout activeItem="Dashboard">

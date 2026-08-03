@@ -51,10 +51,10 @@ const ExamInstructions = () => {
     return (
       <DashboardLayout activeItem="Available Exams">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/student/exams")}
           style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--color-text-secondary)", fontSize: 13, cursor: "pointer", marginBottom: 18 }}
         >
-          <ArrowLeft size={15} /> Back to dashboard
+          <ArrowLeft size={15} /> Back to Available Exams
         </button>
         <div className="card" style={{ padding: 24, color: "#b91c1c" }}>
           {loadError || "Exam not found."}
@@ -92,10 +92,10 @@ const ExamInstructions = () => {
   return (
     <DashboardLayout activeItem="Available Exams">
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/student/exams")}
         style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--color-text-secondary)", fontSize: 13, cursor: "pointer", marginBottom: 18 }}
       >
-        <ArrowLeft size={15} /> Back to dashboard
+        <ArrowLeft size={15} /> Back to Available Exams
       </button>
 
       <div className="card" style={{ padding: 36, maxWidth: 640 }}>
