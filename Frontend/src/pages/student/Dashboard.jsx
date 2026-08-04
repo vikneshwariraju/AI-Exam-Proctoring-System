@@ -66,17 +66,17 @@ const statCards = [
   {
     label: "Total Exams",
     value: stats.totalExams,
-    icon: <FileText size={30} color="var(--color-primary)" />,
+    icon: <FileText size={22} color="var(--color-primary)" />,
   },
   {
     label: "Completed",
     value: stats.completedExams,
-    icon: <ListChecks size={30} color="var(--color-success)" />,
+    icon: <ListChecks size={22} color="var(--color-success)" />,
   },
   {
     label: "Average Score",
     value: `${stats.averageScore}%`,
-    icon: <CalendarClock size={30} color="var(--color-warning)" />,
+    icon: <CalendarClock size={22} color="var(--color-warning)" />,
   },
 ];
 

@@ -34,6 +34,7 @@
     border-radius:15px;
     box-shadow:0 8px 20px rgba(0,0,0,.05);
     padding:25px;
+    min-height:420px;
 }
 
 .palette-card{

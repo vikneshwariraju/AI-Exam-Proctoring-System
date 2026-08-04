@@ -15,38 +15,51 @@ export const getExamDetails = async (examId) => {
     return {
         id: exam.id,
         title: exam.title ?? exam.name ?? "Untitled Exam",
+        subject: exam.subject ?? "",
         description: exam.description ?? "",
         duration: exam.duration ?? exam.duration_minutes ?? 0,
         totalMarks: exam.totalMarks ?? exam.total_marks ?? 0,
+        startTime: exam.start_time ?? exam.startTime ?? "",
         deadline: exam.deadline ?? exam.end_time ?? "",
         instructions: Array.isArray(exam.instructions) ? exam.instructions : []
     };
 };
 
-//Exam Questions
+//Exam Questions — camera_verified=true is required by the backend or it
+//400s with "Camera must be enabled before starting the exam".
 export const getExamQuestions = async (examId) => {
-  const { data } = await api.get(`/submissions/start/${examId}/`,
-  {
-      params: {
-        camera_verified: true,
-      },
-    }
-  );
+  const { data } = await api.get(`/submissions/start/${examId}/`, {
+    params: {
+      camera_verified: true,
+    },
+  });
+
   return {
-    questions: data.questions.map((q) => ({
-      id: q.id,
-      text: q.question_text,
-      options: [
-        q.option1,
-        q.option2,
-        q.option3,
-        q.option4,
-      ],
-      difficulty: q.difficulty,
-    })),
+    // Forwarded so the Timer can resume from where the student left off
+    // on refresh/reconnect, instead of always restarting at full duration.
+    remainingSeconds: data?.remaining_seconds ?? null,
     duration: data.duration,
     totalMarks: data.total_marks,
+    questions: (data.questions || []).map((q) => ({
+      id: q.id,
+      text: q.question_text,
+      options: [q.option1, q.option2, q.option3, q.option4].filter(
+        (opt) => opt !== null && opt !== undefined && opt !== ""
+      ),
+      difficulty: q.difficulty,
+      marks: q.marks ?? q.mark ?? 1,
+    })),
   };
+};
+
+//Restore any answers the student already picked (e.g. after refresh/reconnect)
+export const getSavedAnswers = async (examId) => {
+  try {
+    const { data } = await api.get(`/submissions/saved-answers/${examId}/`);
+    return data && typeof data === "object" ? data : {};
+  } catch {
+    return {};
+  }
 };
 
 /**submit exam*/

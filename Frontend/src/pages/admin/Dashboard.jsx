@@ -116,12 +116,19 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout activeItem="Dashboard">
 
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
+        Admin Dashboard
+      </h1>
+      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
+        Overview of platform activity, users, and exam status.
+      </p>
+
       <div className="row g-3 mb-4">
         <div className="col-6 col-md-4">
           <StatisticsCard
             label="Active Exams"
             value={stats.activeExams}
-            icon={<BookOpen size={30} color="var(--color-accent)" />}
+            icon={<BookOpen size={22} color="var(--color-accent)" />}
           />
         </div>
 
@@ -129,7 +136,7 @@ const AdminDashboard = () => {
           <StatisticsCard
             label="AI Alerts"
             value={stats.flaggedAlerts ?? "—"}
-            icon={<AlertTriangle size={30} color="var(--color-danger)" />}
+            icon={<AlertTriangle size={22} color="var(--color-danger)" />}
           />
         </div>
 
@@ -137,7 +144,7 @@ const AdminDashboard = () => {
           <StatisticsCard
             label="Total Users"
             value={userStats?.totalUsers ?? "—"}
-            icon={<Layers size={30} color="var(--color-warning)" />}
+            icon={<Layers size={22} color="var(--color-warning)" />}
           />
         </div>
       </div>
@@ -149,13 +156,17 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div style={{ overflowX: "auto" }}>
+      <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 15.5, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 12 }}>
+        Students
+      </h3>
+      <div style={{ overflowX: "auto", marginBottom: 28 }}>
         <StudentTable students={students} />
       </div>
 
-      <br />
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 15.5, fontWeight: 600, color: "var(--color-text-primary)", margin: 0 }}>
+          Faculty
+        </h3>
         <button
           className="btn-primary-brand d-flex align-items-center gap-2"
           onClick={() => setShowModal(true)}
@@ -163,13 +174,13 @@ const AdminDashboard = () => {
           <Plus size={15} /> Add Faculty
         </button>
       </div>
-
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", marginBottom: 28 }}>
         <FacultyTable faculty={faculty} />
       </div>
 
-      <br />
-
+      <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 15.5, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 12 }}>
+        Exams
+      </h3>
       <div style={{ overflowX: "auto" }}>
         <ExamTable exams={exams} />
       </div>

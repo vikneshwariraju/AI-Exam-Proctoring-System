@@ -28,14 +28,25 @@ const AIAlerts = () => {
                 Students flagged by the AI proctoring system for repeated suspicious activity.
             </p>
 
-            <div className="card" style={{ padding: 20, marginBottom: 20, display: "flex", alignItems: "center", gap: 16, maxWidth: 320 }}>
-                <AlertTriangle size={30} color="var(--color-danger)" />
-                <div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)" }}>
-                        {loading ? "—" : alerts.length}
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>
-                        Flagged students (3+ warnings)
+            <div className="row g-3 mb-4">
+                <div className="col-6 col-md-3">
+                    <div
+                        className="card"
+                        style={{
+                            padding: 18,
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        <div>
+                            <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Flagged Students</div>
+                            <div style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)", marginTop: 4 }}>
+                                {loading ? "—" : alerts.length}
+                            </div>
+                        </div>
+                        <AlertTriangle size={22} color="var(--color-danger)" />
                     </div>
                 </div>
             </div>
