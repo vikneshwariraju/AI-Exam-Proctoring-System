@@ -246,7 +246,7 @@ const loadData = async () => {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                {["Student", "Exam", "Date", "Result", "Score", "Time Spent", "Status", ""].map((h) => (
+                {["Student", "Exam", "Date", "Result", "Score",  "Status", ""].map((h) => (
                   <th key={h} style={{ textAlign: "left", padding: "10px 14px", fontSize: 12, color: "var(--color-text-secondary)", textTransform: "uppercase" }}>
                     {h}
                   </th>

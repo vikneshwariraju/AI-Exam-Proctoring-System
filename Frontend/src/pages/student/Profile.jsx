@@ -123,25 +123,6 @@ const Profile = () => {
             </div>
 
           </div>
-
-          <button
-            className="w-100 mt-4"
-            style={{
-              height: 46,
-              border: "none",
-              borderRadius: 10,
-              background: "var(--color-primary)",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "0.2s",
-            }}
-            onClick={() => alert("Edit profile — coming soon")}
-          >
-            Edit Profile
-          </button>
-
         </div>
       </div>
     </DashboardLayout>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getExamDetails,
   getExamQuestions,
+  getSavedAnswers,
   submitAnswer,
   finalizeExam,
 } from "../../services/examService";
@@ -15,6 +16,19 @@ import SubmitModal from "../../components/exam/SubmitModal";
 import WebcamProctor from "../../components/exam/WebcamProctor";
 import Loader from "../../components/common/Loader";
 import Button from "../../components/common/Button";
+
+// Backend stores each question's correct answer as a letter (A/B/C/D), so
+// submissions must be sent as letters too -- not the 0-based option index
+// -- or every answer gets marked wrong regardless of what was picked.
+const OPTION_LETTERS = ["A", "B", "C", "D"];
+const indexToLetter = (index) => OPTION_LETTERS[index] ?? index;
+const letterToIndex = (value) => {
+  if (typeof value === "string" && OPTION_LETTERS.includes(value.toUpperCase())) {
+    return OPTION_LETTERS.indexOf(value.toUpperCase());
+  }
+  const n = Number(value);
+  return Number.isNaN(n) ? value : n;
+};
 
 const AttendExam = () => {
   const { examId } = useParams();
@@ -39,52 +53,63 @@ const AttendExam = () => {
       setLoadError("");
 
       try {
-  // Ask for camera permission first
-  console.log("Requesting camera...");
-  await navigator.mediaDevices.getUserMedia({ video: true });
+        // Ask for camera permission first, and make sure to stop the
+        // preview stream once confirmed -- otherwise it stays locked and
+        // can conflict with WebcamProctor opening the camera right after.
+        console.log("Requesting camera...");
+        const previewStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        previewStream.getTracks().forEach((track) => track.stop());
 
-  // Camera verified, now call backend
-  const [examDetails, startData] = await Promise.all([
-    getExamDetails(examId),
-    getExamQuestions(examId),
-  ]);
+        // Camera verified, now call backend
+        const [examDetails, startData, savedAnswers] = await Promise.all([
+          getExamDetails(examId),
+          getExamQuestions(examId),
+          getSavedAnswers(examId), // safe: resolves to {} if not implemented/available
+        ]);
 
-  if (cancelled) return;
+        if (cancelled) return;
 
-  if (!examDetails) {
-    setLoadError("Exam not found.");
-    return;
-  }
+        if (!examDetails) {
+          setLoadError("Exam not found.");
+          return;
+        }
 
-  if (!startData?.questions || startData.questions.length === 0) {
-    setLoadError("No questions found.");
-    return;
-  }
+        if (!startData?.questions || startData.questions.length === 0) {
+          setLoadError("No questions found.");
+          return;
+        }
 
-  setExam(examDetails);
-  setQuestions(startData.questions);
-  console.log("Start Exam API:", startData);
-  setRemainingSeconds(
-    startData.remaining_seconds ?? startData.duration * 60
-);
+        setExam(examDetails);
+        setQuestions(startData.questions);
+        console.log("Start Exam API:", startData);
+        setRemainingSeconds(
+          startData.remainingSeconds ?? startData.duration * 60
+        );
 
-} catch (err) {
-  if (cancelled) return;
+        if (savedAnswers && typeof savedAnswers === "object") {
+          const restored = {};
+          Object.entries(savedAnswers).forEach(([questionId, selectedOption]) => {
+            restored[questionId] = letterToIndex(selectedOption);
+          });
+          setAnswers(restored);
+        }
+      } catch (err) {
+        if (cancelled) return;
 
-  console.error(err);
+        console.error(err);
 
-  if (err.name === "NotAllowedError") {
-    setLoadError("Camera permission is required to start the exam.");
-  } else {
-    setLoadError(
-      err.response?.data?.error ||
-      err.response?.data?.detail ||
-      "Unable to load exam."
-    );
-  }
-} finally {
-  if (!cancelled) setLoading(false);
-}
+        if (err.name === "NotAllowedError") {
+          setLoadError("Camera permission is required to start the exam.");
+        } else {
+          setLoadError(
+            err.response?.data?.error ||
+            err.response?.data?.detail ||
+            "Unable to load exam."
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
     load();
@@ -108,7 +133,7 @@ const AttendExam = () => {
         console.log("Warning Logged:", response);
 
         if (response.flagged) {
-          alert(`Warning limit exceeded due to repeated: ${response.warning_type}. Faculty has been notified.`);
+          alert("Warning limit exceeded due to repeated tab switching. Faculty has been notified.");
         }
       } catch (err) {
         console.error("Warning failed:", err);
@@ -166,16 +191,16 @@ const AttendExam = () => {
       [currentQuestion.id]: optionIndex,
     }));
 
-    // ...and sync to the backend in the background on every change, so
-    // progress survives a closed tab/crash instead of only being saved
-    // at the very end.
-    submitAnswer(examId, currentQuestion.id, optionIndex).catch((err) => {
+    // ...and sync to the backend as a letter (A/B/C/D), matching how the
+    // correct answer is stored, so grading actually works.
+    const selectedLetter = indexToLetter(optionIndex);
+    submitAnswer(examId, currentQuestion.id, selectedLetter).catch((err) => {
       console.error("Failed to save answer:", err.response?.data || err);
     });
   };
 
   const handleSubmit = async () => {
-    if (submitting) return; 
+    if (submitting) return;
     setSubmitting(true);
 
     try {
@@ -200,8 +225,6 @@ const AttendExam = () => {
     }
   };
 
-  const durationMinutes = remainingSeconds != null ? remainingSeconds / 60 : exam.duration;
-
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
       <div
@@ -219,19 +242,15 @@ const AttendExam = () => {
       >
         <h5 style={{ margin: 0 }}>{exam.title}</h5>
 
-       <Timer
-  initialSeconds={remainingSeconds}
-  onTimeUp={handleSubmit}
-/>
+        <Timer
+          initialSeconds={remainingSeconds}
+          onTimeUp={handleSubmit}
+        />
       </div>
 
       <div
         className="container-fluid"
-        style={{  minHeight: "85vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "40px", }}
+        style={{ maxWidth: 1100, margin: "30px auto", padding: "0 20px 60px" }}
       >
         <div className="row g-3">
           <div className="col-12 col-lg-8">
