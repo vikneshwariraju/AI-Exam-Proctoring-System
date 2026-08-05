@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, Pencil, X } from "lucide-react";
-import { addQuestion, getExamQuestionsList, updateQuestion } from "../../services/facultyService";
+import { Plus, ArrowLeft, Pencil, X, Trash2 } from "lucide-react";
+import { addQuestion, getExamQuestionsList, updateQuestion, deleteQuestion } from "../../services/facultyService";
+import { getExamDetails } from "../../services/examService";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Loader from "../../components/common/Loader";
 
@@ -12,26 +13,37 @@ const AddQuestions = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const [questions, setQuestions] = useState([]);
+  const [examTotalMarks, setExamTotalMarks] = useState(null); // NEW: exam's target total marks
+  const [addWarning, setAddWarning] = useState("");             // NEW: one-off warning after adding a question
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const usedMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
-// pass exam.total_marks down as a prop, or fetch exam details separately
   const [rawError, setRawError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState(null);
 
+  // NEW: running total of marks already assigned across all questions
+  const usedMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  const marksIncomplete = examTotalMarks != null && usedMarks < examTotalMarks;
+
   useEffect(() => {
-    getExamQuestionsList(examId)
-      .then((data) => setQuestions(Array.isArray(data) ? data : []))
-      .catch(() => setQuestions([]))
+    Promise.all([
+      getExamQuestionsList(examId).catch(() => []),
+      getExamDetails(examId).catch(() => null),
+    ])
+      .then(([qList, exam]) => {
+        setQuestions(Array.isArray(qList) ? qList : []);
+        setExamTotalMarks(exam?.totalMarks ?? null);
+      })
       .finally(() => setLoading(false));
   }, [examId]);
 
   const onSubmit = async (formData) => {
     setRawError(null);
+    setAddWarning("");
     setSubmitting(true);
 
     const payload = {
@@ -47,6 +59,9 @@ const AddQuestions = () => {
     try {
       const newQuestion = await addQuestion(examId, payload);
       setQuestions((prev) => [...prev, newQuestion]);
+      if (newQuestion?.warning) {
+        setAddWarning(newQuestion.warning); // NEW: surface backend's marks-shortfall warning
+      }
       reset();
     } catch (err) {
       setRawError(err.response?.data || { error: "Something went wrong. Check the console." });
@@ -104,6 +119,25 @@ const AddQuestions = () => {
     }
   };
 
+  const handleDeleteQuestion = async (questionId) => {
+    const ok = window.confirm("Delete this question? This cannot be undone.");
+    if (!ok) return;
+
+    setDeletingId(questionId);
+    try {
+      await deleteQuestion(questionId);
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    } catch (err) {
+      alert(
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        "Unable to delete this question. Please try again."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout activeItem="Manage Exams">
@@ -124,9 +158,25 @@ const AddQuestions = () => {
       <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 21, marginBottom: 6, color: "var(--color-text-primary)" }}>
         Manage Questions
       </h1>
-      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 24 }}>
+      <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 8 }}>
         {questions.length} question{questions.length !== 1 ? "s" : ""} added so far.
+        {examTotalMarks != null && ` (${usedMarks}/${examTotalMarks} marks allocated)`}
       </p>
+
+      {/* Persistent banner while marks are short of the exam's total */}
+      {marksIncomplete && (
+        <div style={{ background: "#FFFBEB", color: "#92400E", padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 16 }}>
+          Marks allocated ({usedMarks}) haven't reached this exam's total of {examTotalMarks} yet.
+          {" "}{examTotalMarks - usedMarks} mark(s) still need to be assigned.
+        </div>
+      )}
+
+      {/* One-off warning surfaced right after adding a question */}
+      {addWarning && (
+        <div style={{ background: "#FFFBEB", color: "#92400E", padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 16 }}>
+          {addWarning}
+        </div>
+      )}
 
       <div className="row g-3">
 
@@ -214,14 +264,25 @@ const AddQuestions = () => {
                         Marks: {q.marks ?? "-"}
                       </div>
                     </div>
-                    <button
-                      className="btn p-1"
-                      style={{ color: "var(--color-primary)" }}
-                      onClick={() => startEditing(q)}
-                      title="Edit question"
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn p-1"
+                        style={{ color: "var(--color-primary)" }}
+                        onClick={() => startEditing(q)}
+                        title="Edit question"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        className="btn p-1"
+                        style={{ color: "var(--color-danger)" }}
+                        onClick={() => handleDeleteQuestion(q.id)}
+                        disabled={deletingId === q.id}
+                        title="Delete question"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
