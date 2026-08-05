@@ -35,7 +35,19 @@ class AddQuestionView(APIView):
         serializer = QuestionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            new_total = current_total + new_marks
+            response_data = dict(serializer.data)
+
+            # NEW: let faculty know if the exam's total marks aren't
+            # fully covered yet by the questions added so far.
+            if new_total < exam.total_marks:
+                response_data['warning'] = (
+                    f"Marks allocated so far ({new_total}) haven't reached this exam's total "
+                    f"of {exam.total_marks}. {exam.total_marks - new_total} mark(s) still need to be assigned."
+                )
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ListQuestionsView(APIView):

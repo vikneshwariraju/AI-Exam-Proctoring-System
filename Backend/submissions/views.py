@@ -37,6 +37,15 @@ class StartExamView(APIView):
         if attempt.submitted:
             return Response({'error': 'You have already submitted this exam'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # NEW: block re-entry. Once an attempt row exists, this is not the
+        # student's first time hitting Start — they must have exited
+        # without submitting. Don't let them back in.
+        if not created:
+            return Response(
+                {'error': 'You have already started this exam and left it. Re-entry is not allowed. Please contact your faculty if you were disconnected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         elapsed_seconds = (now - attempt.started_at).total_seconds()
         remaining_seconds = max(0, (exam.duration * 60) - elapsed_seconds)
 
@@ -62,7 +71,6 @@ class StartExamView(APIView):
             'remaining_seconds': int(remaining_seconds),
             'questions': questions_data
         }, status=status.HTTP_200_OK)
-
 
 class SubmitAnswerView(APIView):
     permission_classes = [IsAuthenticated]
