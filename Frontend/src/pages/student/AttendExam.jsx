@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getExamDetails,
@@ -44,11 +44,21 @@ const AttendExam = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
+  // Guards against StartExamView being hit twice for the same visit —
+  // e.g. React StrictMode's dev-only double-invoke of effects. That
+  // endpoint isn't a read-only GET (it creates the ExamAttempt row on
+  // first call), so firing it twice looks identical to a real "student
+  // left and came back" re-entry to the backend, and got wrongly blocked.
+  const hasStartedRef = useRef(false);
+
   // Load Exam
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+
       setLoading(true);
       setLoadError("");
 
