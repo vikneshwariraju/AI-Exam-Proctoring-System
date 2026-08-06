@@ -44,17 +44,23 @@ const AttendExam = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  // Guards against StartExamView being hit twice for the same visit —
+  // Guards against StartExamView being hit twice for the same visit --
   // e.g. React StrictMode's dev-only double-invoke of effects. That
   // endpoint isn't a read-only GET (it creates the ExamAttempt row on
   // first call), so firing it twice looks identical to a real "student
-  // left and came back" re-entry to the backend, and got wrongly blocked.
+  // left and came back" re-entry to the backend, and gets wrongly blocked.
+  //
+  // NOTE: this ref alone is the guard. We deliberately do NOT pair it
+  // with a "cancelled" flag from the effect's cleanup -- StrictMode's
+  // synthetic unmount would set cancelled=true on the *one* run that
+  // actually did the work, before its async calls resolve, and the
+  // second run (whose cleanup never fires) bails out immediately via
+  // the ref check without ever calling load(). That combo was what froze
+  // the page on "Loading Exam..." forever.
   const hasStartedRef = useRef(false);
 
   // Load Exam
   useEffect(() => {
-    let cancelled = false;
-
     const load = async () => {
       if (hasStartedRef.current) return;
       hasStartedRef.current = true;
@@ -76,8 +82,6 @@ const AttendExam = () => {
           getExamQuestions(examId),
           getSavedAnswers(examId), // safe: resolves to {} if not implemented/available
         ]);
-
-        if (cancelled) return;
 
         if (!examDetails) {
           setLoadError("Exam not found.");
@@ -104,10 +108,11 @@ const AttendExam = () => {
           setAnswers(restored);
         }
       } catch (err) {
-        if (cancelled) return;
-
         console.error(err);
 
+        // A genuine re-entry attempt from the backend still needs to be
+        // shown as-is, but a call that never actually reached the backend
+        // (e.g. camera permission denial) shouldn't get lumped in with it.
         if (err.name === "NotAllowedError") {
           setLoadError("Camera permission is required to start the exam.");
         } else {
@@ -118,14 +123,11 @@ const AttendExam = () => {
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
     load();
-    return () => {
-      cancelled = true;
-    };
   }, [examId]);
 
   // AI Tab Switch Detection
